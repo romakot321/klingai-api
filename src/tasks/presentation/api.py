@@ -18,7 +18,7 @@ from src.tasks.domain.dtos import (
     TaskReadDTO,
 )
 from src.tasks.domain.mappers import TaskEntityToDTOMapper
-from src.tasks.presentation.dependencies import TaskApiClientServiceDepend, TaskUoWDepend
+from src.tasks.presentation.dependencies import TaskWebhookClientServiceDepend, TaskUoWDepend
 
 from src.tasks.application.use_cases.task_create import create_task as uc_create_task
 from src.tasks.application.use_cases.task_status import get_task as uc_get_task
@@ -69,7 +69,7 @@ async def get_task(task_id: int, uow: TaskUoWDepend):
 async def task_result_webhook(
     task_id: int,
     uow: TaskUoWDepend,
-    task_api_client: TaskApiClientServiceDepend,
+    task_api_client: TaskWebhookClientServiceDepend,
     body: dict = Body(),
     storage: LocalStorageRepository = Depends(get_local_storage_repository),
     task_source: KlingAdapter = Depends(get_kling_adapter),

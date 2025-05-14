@@ -1,4 +1,5 @@
 from base64 import b64encode
+import logging
 import aiohttp
 from enum import Enum
 from typing import Literal
@@ -6,6 +7,8 @@ from urllib.parse import urljoin
 
 from src.integrations.infrastructure.http.aiohttp_client import AiohttpClient
 from src.integrations.infrastructure.http.interfaces import IAsyncHttpClient, TResponse
+
+logger = logging.getLogger(__name__)
 
 
 class AuthMixin:
@@ -42,6 +45,7 @@ class APIClientService(AuthMixin):
             "headers": {**self.headers, **headers},
             "json": json, "params": params, **kwargs
         }
+        logger.debug(f"Perfoming api request to {endpoint} with {request_params=}")
         if method == "GET":
             response = await self.client.get(**request_params)
         elif method == "POST":
@@ -55,6 +59,7 @@ class APIClientService(AuthMixin):
         else:
             raise ValueError("Method not supported")
         if response.status != 200:
-            print("[APIClient] Error on request: ", await response.text())
+            logger.warning(f"Error occured on api request: {await response.text()}")
             response.raise_for_status()
+        logger.debug(f"Get api response to {endpoint}: {response}")
         return response

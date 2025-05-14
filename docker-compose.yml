@@ -15,12 +15,14 @@ services:
       default:
     volumes:
       - app_localstorage:/app/storage
+      - ./logs/fastapi:/app/logs
 
   db:
     image: postgres:16
     container_name: klingapi_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./etc/postgresql/postgresql.conf:/etc/postgresql/postgresql.conf:ro
       - ./logs/postgresql:/var/log/postgresql
     env_file:
       - .env
@@ -29,6 +31,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     restart: always
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
     networks:
       default:
 

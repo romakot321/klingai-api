@@ -10,7 +10,7 @@ from src.tasks.domain.mappers import TaskEntityToDTOMapper
 from src.tasks.infrastructure.http.http_client import TaskAiohttpClient
 
 
-class TaskAPIClientService:
+class TaskWebhookClientService:
     def __init__(
         self,
         client: IAsyncHttpClient[TResponse] = TaskAiohttpClient,
