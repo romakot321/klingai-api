@@ -35,10 +35,24 @@ services:
     networks:
       default:
 
+  prometheus:
+    image: prom/prometheus:v3.2.1
+    container_name: prometheus
+    depends_on:
+      - app
+    volumes:
+      - prometheus_data:/prometheus
+      - ./etc/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=7d"
+
 networks:
   global_network:
     external: true
 
 volumes:
   postgres_data:
+  prometheus_data:
   app_localstorage:
