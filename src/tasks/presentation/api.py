@@ -2,7 +2,7 @@
 
 import io
 from uuid import UUID
-from fastapi import APIRouter, Body, Depends, File, Request, UploadFile
+from fastapi import APIRouter, Body, Depends, File, Request, UploadFile, HTTPException
 from fastapi.responses import Response
 
 from src.core.config import settings
@@ -74,7 +74,6 @@ async def task_result_webhook(
     storage: LocalStorageRepository = Depends(get_local_storage_repository),
     task_source: KlingAdapter = Depends(get_kling_adapter),
 ):
-    print("Received webhook: " + str(body))
     try:
         await store_task_result(task_id, body, uow, task_source, task_api_client, storage)
     except HTTPException:

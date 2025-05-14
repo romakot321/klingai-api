@@ -23,7 +23,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./etc/postgresql/postgresql.conf:/etc/postgresql/postgresql.conf:ro
-      - ./logs/postgresql:/var/log/postgresql
+      - ./logs/postgresql:/var/log/postgresql:z
     env_file:
       - .env
     environment:

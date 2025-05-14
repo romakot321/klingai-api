@@ -54,5 +54,6 @@ class PGTaskRepository(ITaskRepository):
             user_id=model.user_id,
             app_id=model.app_id,
             result=model.result,
-            error=model.error
+            error=model.error,
+            webhook_url=model.webhook_url
         )
