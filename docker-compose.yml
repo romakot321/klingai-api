@@ -10,6 +10,8 @@ services:
     env_file:
       - .env
     restart: always
+    ports:
+      - "8081:80"
     networks:
       global_network:
       default:
@@ -34,10 +36,12 @@ services:
     command: postgres -c config_file=/etc/postgresql/postgresql.conf
     networks:
       default:
+    ports:
+      - "5432:5432"
 
   prometheus:
     image: prom/prometheus:v3.2.1
-    container_name: prometheus
+    container_name: klingapi_prometheus
     depends_on:
       - app
     volumes:
@@ -48,6 +52,30 @@ services:
       - "--storage.tsdb.path=/prometheus"
       - "--storage.tsdb.retention.time=7d"
 
+  postgres_exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    container_name: klingapi_postgres_prometheus_exporter
+    depends_on:
+      - db
+    env_file:
+      - .env
+    environment:
+      DATA_SOURCE_NAME: postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/postgres?sslmode=disable
+    restart: always
+
+  grafana:
+    image: grafana/grafana:11.6.0
+    container_name: grafana
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./etc/grafana/provisioning:/usr/share/grafana/provisioning
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+
 networks:
   global_network:
     external: true
@@ -56,3 +84,4 @@ volumes:
   postgres_data:
   prometheus_data:
   app_localstorage:
+  grafana_data:

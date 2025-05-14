@@ -7,3 +7,7 @@ scrape_configs:
     metrics_path: '/__internal_metrics__'
     static_configs:
       - targets: ['app:80']
+
+  - job_name: 'postgres_exporter'
+    static_configs:
+      - targets: ['postgres_exporter:9187']
