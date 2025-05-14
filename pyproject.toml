@@ -22,6 +22,7 @@ dependencies = [
     "pydantic-settings>=2.7.0",
     "aiohttp>=3.11.18",
     "pyjwt>=2.10.1",
+    "python-json-logger>=3.3.0",
 ]
 
 # https://docs.astral.sh/uv/concepts/dependencies/#development-dependencies
