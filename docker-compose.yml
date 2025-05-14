@@ -1,0 +1,45 @@
+version: '3'
+
+services:
+  app:
+    build:
+      context: ./
+    container_name: klingapi_app
+    depends_on:
+      - db
+    env_file:
+      - .env
+    restart: always
+    ports:
+      - "8081:80"
+    networks:
+      global_network:
+      default:
+    volumes:
+      - app_localstorage:/app/storage
+
+  db:
+    image: postgres:16
+    container_name: klingapi_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./logs/postgresql:/var/log/postgresql
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    restart: always
+    networks:
+      default:
+
+networks:
+  global_network:
+    external: true
+
+volumes:
+  postgres_data:
+  app_localstorage:
