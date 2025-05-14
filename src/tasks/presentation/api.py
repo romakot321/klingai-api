@@ -40,7 +40,7 @@ async def create_task_from_text(
     task_source: KlingAdapter = Depends(get_kling_adapter),
 ):
     task = await uc_create_task(task_data, uow)
-    task_data.callback_url = settings.DOMAIN + "/webhook/" + str(task.id)
+    task_data.callback_url = "https://" + settings.DOMAIN + "/webhook/" + str(task.id)
     await uc_run_task_text2video(task.id, task_data, task_source, uow)
     return TaskEntityToDTOMapper().map_one(task)
 
@@ -53,7 +53,7 @@ async def create_task_from_image(
     task_data: TaskCreateFromImageDTO = Depends(TaskCreateFromImageDTO.as_form),
 ):
     task = await uc_create_task(task_data, uow)
-    task_data.callback_url = settings.DOMAIN + "/webhook/" + str(task.id)
+    task_data.callback_url = "https://" + settings.DOMAIN + "/webhook/" + str(task.id)
     image = io.BytesIO(await file.read())
     await uc_run_task_image2video(task.id, task_data, image, task_source, uow)
     return TaskEntityToDTOMapper().map_one(task)
@@ -74,7 +74,11 @@ async def task_result_webhook(
     storage: LocalStorageRepository = Depends(get_local_storage_repository),
     task_source: KlingAdapter = Depends(get_kling_adapter),
 ):
-    await store_task_result(task_id, body, uow, task_source, task_api_client, storage)
+    print("Received webhook: " + str(body))
+    try:
+        await store_task_result(task_id, body, uow, task_source, task_api_client, storage)
+    except HTTPException:
+        pass
 
 
 @tasks_router.get("/result/{task_id}", response_class=Response)

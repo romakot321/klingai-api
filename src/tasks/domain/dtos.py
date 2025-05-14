@@ -22,7 +22,7 @@ class TaskCreateFromImageDTO(TaskCreateDTO):
         appId: str = Form(),
         userId: str = Form(),
         prompt: str = Form(),
-        webhook_url: HttpUrl = Form()
+        webhook_url: HttpUrl | None = Form(None)
     ):
         return cls(app_id=appId, user_id=userId, prompt=prompt, webhook_url=webhook_url)
 

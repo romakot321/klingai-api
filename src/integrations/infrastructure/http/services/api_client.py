@@ -54,5 +54,7 @@ class APIClientService(AuthMixin):
             response = await self.client.patch(**request_params)
         else:
             raise ValueError("Method not supported")
-        response.raise_for_status()
+        if response.status != 200:
+            print("[APIClient] Error on request: ", await response.text())
+            response.raise_for_status()
         return response

@@ -6,6 +6,7 @@ import time
 import aiohttp
 import jwt
 import datetime
+from pydantic import ValidationError
 
 from src.integrations.infrastructure.external_api.kling.schemas.request import (
     KlingGenerateImageToVideoParams,
@@ -119,7 +120,10 @@ class KlingAdapter(
         return TaskExternalToDomainMapper().map_one(result)
 
     async def process_task_callback(self, data: dict) -> io.BytesIO | None:
-        task_data = KlingResponseDataSchema.model_validate(data)
+        try:
+            task_data = KlingResponseDataSchema.model_validate(data)
+        except ValidationError:
+            return None
         if task_data.task_status == "failed":
             raise ValueError(f"Generation failed: {task_data.task_status_msg}")
         elif task_data.task_status != "succeed" or task_data.task_result is None or not task_data.task_result.videos:

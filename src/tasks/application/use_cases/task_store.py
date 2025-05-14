@@ -20,7 +20,7 @@ async def store_task_result(
 ):
     result = await client.process_task_callback(data)
     if result is None:
-        raise ValueError("Vailed to store task result: task not finished")
+        raise HTTPException(422)
 
     storage.put_file(str(task_id), result)
 
