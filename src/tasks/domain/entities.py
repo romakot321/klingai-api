@@ -19,6 +19,7 @@ class Task(BaseModel):
     user_id: str
     app_id: str
     result: str | None = None
+    external_id: str | None = None
     webhook_url: HttpUrl | None = None
 
 

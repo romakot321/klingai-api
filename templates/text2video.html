@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Kling Panel</title>
+        <link rel="icon" type="image/png" href="/static/favicon-32x32.png" sizes="32x32" />
+        <link rel="icon" type="image/png" href="/static/favicon-16x16.png" sizes="16x16" />
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    </head>
+    <body class="d-flex flex-column" style="height: 100vh;">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div class="container-fluid">
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <a class="navbar-brand" href="#">Kling</a>
+                <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+                    <div class="navbar-nav">
+                        <a class="nav-link" href="/panel/text2video">Text 2 Video</a>
+                        <a class="nav-link" href="/panel/image2video">Image 2 Video</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container-md my-auto">
+            <div class="my-auto border rounded p-3" style="height: 100%;">
+                <form action="/generatetext" method="POST" enctype="multipart/form-data" id="form">
+                  <h2 class="text-center display-6">Генерация Text2Video</h2>
+                  <div class="form-group mb-3">
+                      <label for="prompt" class="mb-3">Промпт</label>
+                      <textarea class="form-control" id="prompt" rows="3"></textarea>
+                  </div>
+                  <div class="form-group mb-3">
+                      <label for="negative_prompt" class="mb-3">Negative Промпт</label>
+                      <textarea class="form-control" id="negative_prompt" rows="3"></textarea>
+                  </div>
+                  <div class="form-group mb-3 d-flex flex-row">
+                      <legend class="col-form-label col-sm-2 pt-0">Модель</legend>
+                      <div class="form-check mx-3">
+                        <input class="form-check-input" type="radio" name="model" id="model1" value="kling-v1">
+                        <label class="form-check-label" for="model1">kling-v1</label>
+                      </div>
+                      <div class="form-check mx-3">
+                        <input class="form-check-input" type="radio" name="model" id="model2" value="kling-v1-6" checked>
+                        <label class="form-check-label" for="model2">kling-v1.6</label>
+                      </div>
+                      <div class="form-check mx-3">
+                        <input class="form-check-input" type="radio" name="model" id="model3" value="kling-v2-master">
+                        <label class="form-check-label" for="model3">kling-v2-master</label>
+                      </div>
+                  </div>
+                  <div class="row">
+                    <div class="form-group mb-3 col-md-3">
+                        <label for="cfg_scale">Креативность</label>
+                        <input class="form-control" id="cfg_scale" type="number" step="0.01" max="1" min="0" value="0.5" />
+                    </div>
+                    <div class="form-group mb-3 col-md-3">
+                        <label for="aspect_ratio">Отношение сторон</label>
+                        <select id="aspect_ratio" class="form-control">
+                          <option selected value="16:9">16:9</option>
+                          <option value="9:16">9:16</option>
+                          <option value="1:1">1:1</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3 col-md-3">
+                        <label for="duration">Продолжительность</label>
+                        <select id="duration" class="form-control">
+                          <option selected value="5">5</option>
+                          <option value="10">10</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3 col-md-3">
+                        <label for="mode">Режим</label>
+                        <select id="mode" class="form-control">
+                          <option selected value="std">Стандартный</option>
+                          <option value="pro">Продвинутый</option>
+                        </select>
+                    </div>
+                  </div>
+
+                  <div class="w-100 my-3 border"></div>
+
+                  <h4 class="text-center my-4">Настройка камеры</h4>
+                  <div class="form-group mb-3">
+                      <label for="camera_type">Тип. Если указывается не "Согласно параметрам", то параметры игнорируются</label>
+                      <select id="camera_type" class="form-control">
+                        <option selected value="">Авто</option>
+                        <option value="simple">Согласно параметрам</option>
+                        <option value="down_back">Камера опускается и движется назад ➡️ Панорамирование(Pan) и масштаб уменьшаются</option>
+                        <option value="forward_up">Камера движется вперед и наклоняется вверх ➡️ Увеличение масштаба и панорамирования</option>
+                        <option value="right_turn_forward">Поверните направо и двигайтесь вперед ➡️</option>
+                        <option value="left_turn_forward">Поверните налево и двигайтесь вперед ➡️</option>
+                      </select>
+                  </div>
+                  <p>Параметры движения камеры</p>
+                  <span class="text-muted">Работают только при Типе = "Согласно параметрам". Указать можно только один из параметров, остальные равны нулю</span>
+                  <div class="row">
+                    <div class="form-group my-3 col-md-2">
+                        <label for="horizontal">Горизонталь</label>
+                        <input class="form-control" id="horizontal" type="number" max="-10" min="10" placeholder="-10..10" />
+                    </div>
+                    <div class="form-group my-3 col-md-2">
+                        <label for="vertical">Вертикаль</label>
+                        <input class="form-control" id="vertical" type="number" max="-10" min="10" placeholder="-10..10" />
+                    </div>
+                    <div class="form-group my-3 col-md-2">
+                        <label for="pan">Панорамирование</label>
+                        <input class="form-control" id="pan" type="number" max="-10" min="10" placeholder="-10..10" />
+                    </div>
+                    <div class="form-group my-3 col-md-2">
+                        <label for="tilt">Наклон</label>
+                        <input class="form-control" id="tilt" type="number" max="-10" min="10" placeholder="-10..10" />
+                    </div>
+                    <div class="form-group my-3 col-md-2">
+                        <label for="roll">Поворот</label>
+                        <input class="form-control" id="roll" type="number" max="-10" min="10" placeholder="-10..10" />
+                    </div>
+                    <div class="form-group my-3 col-md-2">
+                        <label for="zoom">Приближение</label>
+                        <input class="form-control" id="zoom" type="number" max="-10" min="10" placeholder="-10..10" />
+                    </div>
+                  </div>
+
+                  <div class="text-center mt-4 w-100">
+                    <button class="btn btn-primary w-100" id="send">Сгенерировать</button>
+                  </div>
+                </form>
+            </div>
+        </div>
+    </body>
+
+    <script>
+    function structureFormDataToJSON() {
+      const formData = {
+          userId: "panel",
+          appId: "panel",
+          prompt: document.getElementById('prompt').value,
+          negative_prompt: document.getElementById('negative_prompt').value,
+          model_name: document.querySelector('input[name="model"]:checked').value,
+          cfg_scale: parseFloat(document.getElementById('cfg_scale').value),
+          aspect_ratio: document.getElementById('aspect_ratio').value,
+          duration: document.getElementById('duration').value,
+          mode: document.getElementById('mode').value,
+          camera_control: {
+            type: document.getElementById('camera_type').value === "" ? null : document.getElementById('camera_type').value,
+            config: {
+                horizontal: parseFloat(document.getElementById('horizontal').value) || 0,
+                vertical: parseFloat(document.getElementById('vertical').value) || 0,
+                pan: parseFloat(document.getElementById('pan').value) || 0,
+                tilt: parseFloat(document.getElementById('tilt').value) || 0,
+                roll: parseFloat(document.getElementById('roll').value) || 0,
+                zoom: parseFloat(document.getElementById('zoom').value) || 0
+            }
+          }
+      };
+
+      return JSON.stringify(formData);
+    }
+
+    // Example usage:
+    document.getElementById('send').addEventListener('click', function(event) {
+        event.preventDefault(); // Prevent the default form submission
+        const jsonData = structureFormDataToJSON();
+
+        fetch('/generatetext', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: jsonData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response.json(); // Assuming the server responds with JSON
+        })
+        .then(data => {
+            console.log('Success:', data); // Handle the response data
+        })
+        .catch((error) => {
+            event.target.innerText = "Ошибка";
+            console.error('Error:', error); // Handle any errors
+        });
+    });
+    </script>
+</html>

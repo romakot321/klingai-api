@@ -101,22 +101,10 @@ class TaskImageDTOToVideoRequestMapper:
 
 class TaskDTOToRequestMapper():
     def map_text2video(self, task: TaskCreateFromTextDTO) -> KlingGenerateTextToVideoParams:
-        return KlingGenerateTextToVideoParams(
-            prompt=task.prompt,
-            callback_url=self._map_callback_url(task.callback_url),
-        )
+        return KlingGenerateTextToVideoParams(**task.model_dump(mode="json"))
 
     def map_image2video(self, task: TaskCreateFromImageDTO) -> KlingGenerateImageToVideoParams:
-        return KlingGenerateImageToVideoParams(
-            prompt=task.prompt,
-            image="",
-            callback_url=self._map_callback_url(task.callback_url)
-        )
-
-    def _map_callback_url(self, value: HttpUrl | None) -> str | None:
-        if not value:
-            return None
-        return str(value)
+        return KlingGenerateImageToVideoParams(**task.model_dump(mode="json"))
 
 
 class KlingTaskToDomainMapper():

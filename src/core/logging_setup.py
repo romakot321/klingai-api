@@ -2,7 +2,7 @@ import os
 import logging.config
 
 
-LOG_DIR = "/app/logs"
+LOG_DIR = "logs"
 log_file = os.path.join(LOG_DIR, "app.log")
 
 
