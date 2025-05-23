@@ -189,6 +189,7 @@
         })
         .then(data => {
             console.log('Success:', data); // Handle the response data
+            window.location.href = '/panel/task/' + data.id;
         })
         .catch((error) => {
             event.target.innerText = "Ошибка";

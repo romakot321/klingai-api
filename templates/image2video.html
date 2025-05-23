@@ -156,15 +156,21 @@
         formData.append('duration', document.getElementById('duration').value);
         formData.append('mode', document.getElementById('mode').value);
 
-        // Append camera control settings
-        const cameraType = document.getElementById('camera_type').value === "" ? null : document.getElementById('camera_type').value;
-        formData.append('camera_control[type]', cameraType); // Use a bracket notation for nested fields
-        formData.append('camera_control[config][horizontal]', parseFloat(document.getElementById('horizontal').value) || 0);
-        formData.append('camera_control[config][vertical]', parseFloat(document.getElementById('vertical').value) || 0);
-        formData.append('camera_control[config][pan]', parseFloat(document.getElementById('pan').value) || 0);
-        formData.append('camera_control[config][tilt]', parseFloat(document.getElementById('tilt').value) || 0);
-        formData.append('camera_control[config][roll]', parseFloat(document.getElementById('roll').value) || 0);
-        formData.append('camera_control[config][zoom]', parseFloat(document.getElementById('zoom').value) || 0);
+
+        const mode = document.getElementById('mode').value;
+        const duration = document.getElementById('duration').value;
+        const modelName = document.querySelector('input[name="model"]:checked').value;
+        if (mode === 'std' && duration === '5' && modelName === 'kling-v1') {
+          // Append camera control settings
+          const cameraType = document.getElementById('camera_type').value === "" ? null : document.getElementById('camera_type').value;
+          formData.append('camera_control[type]', cameraType); // Use a bracket notation for nested fields
+          formData.append('camera_control[config][horizontal]', parseFloat(document.getElementById('horizontal').value) || 0);
+          formData.append('camera_control[config][vertical]', parseFloat(document.getElementById('vertical').value) || 0);
+          formData.append('camera_control[config][pan]', parseFloat(document.getElementById('pan').value) || 0);
+          formData.append('camera_control[config][tilt]', parseFloat(document.getElementById('tilt').value) || 0);
+          formData.append('camera_control[config][roll]', parseFloat(document.getElementById('roll').value) || 0);
+          formData.append('camera_control[config][zoom]', parseFloat(document.getElementById('zoom').value) || 0);
+        }
 
         // Append the file from the file input
         const fileInput = document.getElementById('fileInput'); // Replace with your file input ID
@@ -186,6 +192,7 @@
     })
     .then(data => {
         console.log('Success:', data); // Handle the response data
+        window.location.href = '/panel/task/' + data.id;
     })
     .catch((error) => {
         console.error('Error:', error); // Handle any errors
