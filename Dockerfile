@@ -80,6 +80,7 @@ COPY --link --chown=$user_id:$group_id --from=build /app/ /app
 COPY ./src /app/src
 COPY --chown=$user_id:$group_id ./templates /app/templates
 RUN mkdir -p /app/storage && chown $user_id:$group_id -R /app/storage
+RUN mkdir -p /app/logs && chown $user_id:$group_id -R /app/logs
 
 USER $user_id:$group_id
 WORKDIR /app

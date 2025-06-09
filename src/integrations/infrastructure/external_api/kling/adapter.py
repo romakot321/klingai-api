@@ -1,7 +1,7 @@
 import base64
 import sys
 import io
-import logging
+from loguru import logger
 import time
 import aiohttp
 import jwt
@@ -44,7 +44,7 @@ class KlingAdapter(
     ],
 ):
     _token: str | None = None
-    log: logging.Logger = logging.getLogger(__name__)
+    log = logger.bind(name="kling")
     _token_issue_at: datetime.datetime | None = None
 
     def __init__(
@@ -92,7 +92,7 @@ class KlingAdapter(
             method="POST",
             endpoint="/v1/videos/text2video",
             headers={"Content-Type": "application/json"},
-            json=request.model_dump(mode="json"),
+            json=request.model_dump(mode="json", exclude_none=True),
         )
         result = await response.json()
         self.log.debug(f"Text2video kling response: {result}")
@@ -104,15 +104,19 @@ class KlingAdapter(
         return base64.b64encode(image.getvalue()).decode()
 
     async def create_task_image2video(
-        self, task_data: TaskCreateFromImageDTO, image: io.BytesIO
+        self, task_data: TaskCreateFromImageDTO, image: io.BytesIO, image_tail: io.BytesIO | None
     ) -> TaskExternalDTO:
         request = self._imgdto_mapper.map_one(task_data)
+        request.camera_control = None
+        self.log.info(f"image2video request: {request}")
         request.image = self._encode_image(image)
+        if image_tail:
+            request.image_tail = self._encode_image(image_tail)
         response = await self.request(
             method="POST",
             endpoint="/v1/videos/image2video",
             headers={"Content-Type": "application/json"},
-            json=request.model_dump(mode="json"),
+            json=request.model_dump(mode="json", exclude_none=True),
         )
         result = await response.json()
         self.log.debug(f"Image2video kling response: {result}")
@@ -134,3 +138,22 @@ class KlingAdapter(
 
         result = io.BytesIO(await response.read())
         return result
+
+    async def get_limits(self) -> dict:
+        response = await self.request(
+            method="GET",
+            endpoint="/account/costs",
+            headers={"Content-Type": "application/json"},
+            params={"start_time": (datetime.datetime.now() - datetime.timedelta(days=30)).timestamp(), "end_time": datetime.datetime.now().timestamp()}
+        )
+        return response
+
+
+async def print_kling_remaining_limits():
+    adapter = KlingAdapter()
+    print(await adapter.get_limits())
+
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(print_kling_remaining_limits())

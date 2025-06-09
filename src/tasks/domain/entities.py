@@ -27,7 +27,7 @@ class TaskCreate(BaseModel):
     user_id: str
     app_id: str
     prompt: str | None = None
-    webhook_url: HttpUrl | None = None
+    webhook_url: str | None = None
 
 
 class TaskUpdate(BaseModel):

@@ -61,7 +61,7 @@ class KlingGenerateTextToVideoParams(BaseModel):
 
 class KlingGenerateImageToVideoParams(BaseModel):
     model_name: Literal["kling-v1", "kling-v1-6", "kling-v2-master"] = "kling-v1"
-    image: str | HttpUrl = Field(description="Can be passed as base64 string, without prefix")
+    image: str | HttpUrl | None = Field(default=None, description="Can be passed as base64 string, without prefix")
     image_tail: str | HttpUrl | None = None
     prompt: str | None = Field(default=None, max_length=2500)
     negative_prompt: str | None = Field(default=None, max_length=2500)

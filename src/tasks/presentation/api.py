@@ -48,6 +48,7 @@ async def create_task_from_text(
 @tasks_router.post("/generate", response_model=TaskReadDTO)
 async def create_task_from_image(
     uow: TaskUoWDepend,
+#    image_tail: UploadFile | None = None,
     task_source: KlingAdapter = Depends(get_kling_adapter),
     file: UploadFile = File(),
     task_data: TaskCreateFromImageDTO = Depends(TaskCreateFromImageDTO.as_form),
@@ -55,7 +56,9 @@ async def create_task_from_image(
     task = await uc_create_task(task_data, uow)
     task_data.callback_url = "https://" + settings.DOMAIN + "/webhook/" + str(task.id)
     image = io.BytesIO(await file.read())
-    await uc_run_task_image2video(task.id, task_data, image, task_source, uow)
+    #if image_tail is not None:
+    #    image_tail = io.BytesIO(await image_tail.read())
+    await uc_run_task_image2video(task.id, task_data, image, None, task_source, uow)
     return TaskEntityToDTOMapper().map_one(task)
 
 

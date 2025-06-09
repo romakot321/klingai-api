@@ -24,6 +24,7 @@ dependencies = [
     "pyjwt>=2.10.1",
     "python-json-logger>=3.3.0",
     "prometheus-fastapi-instrumentator>=7.1.0",
+    "loguru>=0.7.3",
 ]
 
 # https://docs.astral.sh/uv/concepts/dependencies/#development-dependencies

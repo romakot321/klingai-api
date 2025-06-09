@@ -101,10 +101,10 @@ class TaskImageDTOToVideoRequestMapper:
 
 class TaskDTOToRequestMapper():
     def map_text2video(self, task: TaskCreateFromTextDTO) -> KlingGenerateTextToVideoParams:
-        return KlingGenerateTextToVideoParams(**task.model_dump(mode="json"))
+        return KlingGenerateTextToVideoParams(**task.model_dump(mode="json", exclude_unset=True))
 
     def map_image2video(self, task: TaskCreateFromImageDTO) -> KlingGenerateImageToVideoParams:
-        return KlingGenerateImageToVideoParams(**task.model_dump(mode="json"))
+        return KlingGenerateImageToVideoParams(**task.model_dump(mode="json", exclude_unset=True))
 
 
 class KlingTaskToDomainMapper():

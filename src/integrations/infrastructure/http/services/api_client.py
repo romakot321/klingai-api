@@ -1,5 +1,6 @@
 from base64 import b64encode
 import logging
+from loguru import logger
 import aiohttp
 from enum import Enum
 from typing import Literal
@@ -7,8 +8,6 @@ from urllib.parse import urljoin
 
 from src.integrations.infrastructure.http.aiohttp_client import AiohttpClient
 from src.integrations.infrastructure.http.interfaces import IAsyncHttpClient, TResponse
-
-logger = logging.getLogger(__name__)
 
 
 class AuthMixin:

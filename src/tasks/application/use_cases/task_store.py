@@ -1,6 +1,7 @@
 from io import BytesIO
-import logging
+from loguru import logger
 
+from src.core.config import settings
 from fastapi import HTTPException
 from src.tasks.domain.entities import TaskStatus, TaskUpdate
 from src.tasks.domain.interfaces.http_client import IAsyncHttpClient
@@ -9,8 +10,6 @@ from src.tasks.domain.interfaces.task_source_client import ITaskSourceClient, TT
 from src.tasks.domain.interfaces.task_uow import ITaskUnitOfWork
 from src.tasks.infrastructure.http.api_client import TaskWebhookClientService
 from src.localstorage.domain.exceptions import FileNotFoundError
-
-logger = logging.getLogger(__name__)
 
 
 async def store_task_result(
@@ -22,20 +21,27 @@ async def store_task_result(
         storage: ITaskStorageRepository
 ):
     logger.info(f"Received task webhook: {data}")
-    result = await client.process_task_callback(data)
-    if result is None:
-        raise HTTPException(422)
+    result = None
+    try:
+        result = await client.process_task_callback(data)
+    except Exception as e:
+        async with uow:
+            await uow.tasks.update(task_id, TaskUpdate(result=str(task_id), status=TaskStatus.failed, error=str(e)))
+            await uow.commit()
+        logger.error(e)
 
-    storage.put_file(str(task_id), result)
-    logger.info(f"Saved task #{task_id} result")
+    if result:
+        storage.put_file(str(task_id), result)
+        logger.info(f"Saved task #{task_id} result")
 
-    async with uow:
-        await uow.tasks.update(task_id, TaskUpdate(result=str(task_id)))
-        await uow.commit()
+        async with uow:
+            result = "https://" + settings.DOMAIN.rstrip("/") + "/result/" + str(task_id)
+            await uow.tasks.update(task_id, TaskUpdate(result=result, status=TaskStatus.finished))
+            await uow.commit()
 
     async with uow:
         task = await uow.tasks.get_by_pk(task_id)
-        logger.warning((task_id, str(task.__dict__)))
+    if task.status in (TaskStatus.finished, TaskStatus.failed):
         if task.webhook_url is not None:
             await http_client.send_webhook(str(task.webhook_url), task)
 

@@ -1,5 +1,5 @@
 import asyncio
-import logging
+from loguru import logger
 from socket import AF_INET
 
 import aiohttp
@@ -37,7 +37,7 @@ class MockResponse:
 
 class MockedAsyncHttpClient(IAsyncHttpClient[MockResponse]):
     aiohttp_client: aiohttp.ClientSession | None = None
-    log: logging.Logger = logging.getLogger(__name__)
+    log = logger.bind(name="mocked http")
 
     @classmethod
     def get_aiohttp_client(cls) -> aiohttp.ClientSession:

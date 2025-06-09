@@ -35,7 +35,7 @@ class PGTaskRepository(ITaskRepository):
         return self._to_domain(model)
 
     async def update(self, pk: int, task: TaskUpdate) -> None:
-        query = update(TaskDB).values(**task.model_dump(mode="json", exclude_none=True))
+        query = update(TaskDB).values(**task.model_dump(mode="json", exclude_none=True)).filter_by(id=pk)
         await self.session.execute(query)
         try:
             await self.session.flush()

@@ -3,6 +3,7 @@ import aiohttp
 from enum import Enum
 from typing import Literal
 from urllib.parse import urljoin
+from loguru import logger
 
 from src.tasks.domain.entities import Task
 from src.tasks.domain.interfaces.http_client import IAsyncHttpClient, TResponse
@@ -20,7 +21,7 @@ class TaskWebhookClientService:
         self.headers = headers or {}
 
     async def send_webhook(self, url: str, task: Task) -> aiohttp.ClientResponse:
-        json = TaskEntityToDTOMapper().map_one(task)
-        response = await self.client.post(url, json=json, headers=self.headers)
-        response.raise_for_status()
+        data = TaskEntityToDTOMapper().map_one(task)
+        response = await self.client.post(url, json=data.model_dump(), headers=self.headers)
+        logger.info(f"Sended webhook for task #{task.id}. Response: {response}")
         return response

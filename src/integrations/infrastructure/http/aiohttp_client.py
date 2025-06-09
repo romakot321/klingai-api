@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from loguru import logger
 from socket import AF_INET
 
 import aiohttp
@@ -12,7 +13,7 @@ SIZE_POOL_AIOHTTP = 100
 
 class AiohttpClient(IAsyncHttpClient[aiohttp.ClientResponse]):
     aiohttp_client: aiohttp.ClientSession | None = None
-    log: logging.Logger = logging.getLogger(__name__)
+    log = logger.bind(name="http")
 
     @classmethod
     def get_aiohttp_client(cls) -> aiohttp.ClientSession:

@@ -183,13 +183,14 @@
         })
         .then(response => {
             if (!response.ok) {
+		    event.target.innerText = "Ошибка";
                 throw new Error('Network response was not ok ' + response.statusText);
             }
             return response.json(); // Assuming the server responds with JSON
         })
         .then(data => {
             console.log('Success:', data); // Handle the response data
-            window.location.href = '/panel/task/' + data.id;
+            window.location.href = '/panel/task/' + data.data.id;
         })
         .catch((error) => {
             event.target.innerText = "Ошибка";

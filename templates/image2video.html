@@ -33,7 +33,7 @@
                   <h2 class="text-center display-6">Генерация Image2Video</h2>
                   <div class="mb-3">
                       <label for="fileInput" class="form-label">Изображение</label>
-                      <input class="form-control" type="file" id="fileInput">
+                      <input class="form-control" type="file" id="fileInput" required>
                   </div>
                   <div class="form-group mb-3">
                       <label for="prompt" class="mb-3">Промпт</label>
@@ -144,10 +144,12 @@
     document.getElementById('send').addEventListener('click', function(event) {
         event.preventDefault(); // Prevent the default form submission
         const formData = new FormData(); // Create a new FormData object
+        const cameraType = document.getElementById('camera_type').value === "" ? null : document.getElementById('camera_type').value;
 
         // Append the flat fields to FormData
-        formData.append('userId', 'panel');
-        formData.append('appId', 'panel');
+        formData.append('user_id', 'panel');
+        formData.append('app_id', 'panel');
+        // formData.append('camera_type', cameraType);
         formData.append('prompt', document.getElementById('prompt').value);
         formData.append('negative_prompt', document.getElementById('negative_prompt').value);
         formData.append('model_name', document.querySelector('input[name="model"]:checked').value);
@@ -162,7 +164,6 @@
         const modelName = document.querySelector('input[name="model"]:checked').value;
         if (mode === 'std' && duration === '5' && modelName === 'kling-v1') {
           // Append camera control settings
-          const cameraType = document.getElementById('camera_type').value === "" ? null : document.getElementById('camera_type').value;
           formData.append('camera_control[type]', cameraType); // Use a bracket notation for nested fields
           formData.append('camera_control[config][horizontal]', parseFloat(document.getElementById('horizontal').value) || 0);
           formData.append('camera_control[config][vertical]', parseFloat(document.getElementById('vertical').value) || 0);
@@ -186,16 +187,19 @@
     })
     .then(response => {
         if (!response.ok) {
+		    event.target.innerText = "Ошибка";
             throw new Error('Network response was not ok ' + response.statusText);
         }
         return response.json(); // Assuming the server responds with JSON
     })
     .then(data => {
         console.log('Success:', data); // Handle the response data
-        window.location.href = '/panel/task/' + data.id;
+        window.location.href = '/panel/task/' + data.data.id;
     })
     .catch((error) => {
+    event.target.innerText = "Ошибка";
         console.error('Error:', error); // Handle any errors
     });
+});
     </script>
 </html>

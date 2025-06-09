@@ -15,7 +15,7 @@ services:
       default:
     volumes:
       - app_localstorage:/app/storage
-      - ./logs/fastapi:/app/logs
+      - app_logs:/app/logs
 
   db:
     image: postgres:16
@@ -78,4 +78,5 @@ volumes:
   postgres_data:
   prometheus_data:
   app_localstorage:
+  app_logs:
   grafana_data:

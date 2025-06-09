@@ -75,16 +75,16 @@ class KlingCameraControlParams(BaseModel):
         config: KlingCameraControlConfigParams | None = Depends(
             KlingCameraControlConfigParams.as_form
         ),
-        type: Literal[
+        camera_type: Literal[
             "simple",
             "down_back",
             "forward_up",
             "right_turn_forward",
             "left_turn_forward",
         ]
-        | None = Form(),
+        | None = Form(None),
     ):
-        return cls(config=config, type=type)
+        return cls(config=config, type=camera_type)
 
 
 class TaskCreateFromTextDTO(TaskCreateDTO):
@@ -131,7 +131,8 @@ class TaskCreateFromImageDTO(TaskCreateDTO):
         cfg_scale: float = Form(gt=0, lt=1),
         mode: str = Form(default="std"),
         duration: str = Form(default="5"),
-        callback_url: str = Form(default=None),
+        # callback_url: str = Form(default=None),
+        webhook_url: str | None = Form(default=None),
         camera_control: KlingCameraControlParams = Depends(
             KlingCameraControlParams.as_form
         ),
@@ -145,7 +146,7 @@ class TaskCreateFromImageDTO(TaskCreateDTO):
             cfg_scale=cfg_scale,
             mode=mode,
             duration=duration,
-            callback_url=callback_url,
+            webhook_url=webhook_url,
             camera_control=camera_control,
             app_id=app_id,
             user_id=user_id,
@@ -156,8 +157,8 @@ class TaskReadDTO(BaseModel):
     class Data(BaseModel):
         id: int
         status: int
-        photo: HttpUrl | None = None
-        result: HttpUrl | None = None
+        photo: str | None = None
+        result: str | None = None
 
     error: bool
     messages: list[str]
@@ -169,4 +170,4 @@ class TaskExternalDTO(BaseModel):
     id: int | None = None
     status: str
     error: str | None = None
-    result: HttpUrl | None = None
+    result: str | None = None
