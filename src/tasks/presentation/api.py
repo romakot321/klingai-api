@@ -2,7 +2,7 @@
 
 import io
 from uuid import UUID
-from fastapi import APIRouter, Body, Depends, File, Request, UploadFile, HTTPException
+from fastapi import APIRouter, Body, Depends, File, Request, UploadFile, HTTPException, BackgroundTasks
 from fastapi.responses import Response
 
 from src.core.config import settings
@@ -49,6 +49,7 @@ async def create_task_from_text(
 async def create_task_from_image(
     uow: TaskUoWDepend,
 #    image_tail: UploadFile | None = None,
+    background_tasks: BackgroundTasks,
     task_source: KlingAdapter = Depends(get_kling_adapter),
     file: UploadFile = File(),
     task_data: TaskCreateFromImageDTO = Depends(TaskCreateFromImageDTO.as_form),
@@ -58,7 +59,7 @@ async def create_task_from_image(
     image = io.BytesIO(await file.read())
     #if image_tail is not None:
     #    image_tail = io.BytesIO(await image_tail.read())
-    await uc_run_task_image2video(task.id, task_data, image, None, task_source, uow)
+    background_tasks.add_task(uc_run_task_image2video, task.id, task_data, image, None, task_source, uow)
     return TaskEntityToDTOMapper().map_one(task)
 
 

@@ -32,7 +32,7 @@ def setup_fastapi_logging(app: FastAPI):
         serialize=True,
         rotation="30 MB",
         level="INFO",
-        filter=lambda record: record["extra"]["name"] == "fastapi"
+        filter=lambda record: record["extra"].get("name") == "fastapi"
     )
 
     def log(request: Request, response: Response):
@@ -58,3 +58,4 @@ logger.add(
     rotation="30 MB",
     level="INFO"
 )
+logger.disable("src.integrations.infrastructure.http.services.api_client")

@@ -3,7 +3,6 @@ from sqladmin import Admin
 from prometheus_fastapi_instrumentator import Instrumentator
 
 from src.core.config import settings
-import src.core.logging_setup
 from src.core.logging_setup import setup_fastapi_logging
 
 from src.db.engine import engine

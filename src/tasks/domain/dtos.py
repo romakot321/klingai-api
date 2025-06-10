@@ -121,6 +121,7 @@ class TaskCreateFromImageDTO(TaskCreateDTO):
     camera_control: KlingCameraControlParams | None = None
     duration: Literal["5", "10"] = "5"
     callback_url: str | None = None
+    external_task_id: str | None = None
 
     @classmethod
     def as_form(

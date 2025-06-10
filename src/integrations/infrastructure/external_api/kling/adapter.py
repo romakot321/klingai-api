@@ -15,6 +15,7 @@ from src.integrations.infrastructure.external_api.kling.schemas.request import (
 from src.integrations.infrastructure.external_api.kling.schemas.response import (
     KlingResponseDataSchema,
     KlingResponseSchema,
+    KlingTaskStatus
 )
 from src.integrations.infrastructure.external_api.mappers.task import (
     TaskExternalToDomainMapper,
@@ -50,7 +51,7 @@ class KlingAdapter(
     def __init__(
         self,
         client: IAsyncHttpClient = AiohttpClient,
-        source_url: str = "https://api.klingai.com",
+        source_url: str = "https://api-singapore.klingai.com",
         headers: dict | None = None,
     ):
         super().__init__(client, source_url, headers)
@@ -126,12 +127,15 @@ class KlingAdapter(
     async def process_task_callback(self, data: dict) -> io.BytesIO | None:
         try:
             task_data = KlingResponseDataSchema.model_validate(data)
-        except ValidationError:
+        except ValidationError as e:
+            logger.debug(e)
             return None
-        if task_data.task_status == "failed":
+        if task_data.task_status == KlingTaskStatus.failed:
             raise ValueError(f"Generation failed: {task_data.task_status_msg}")
-        elif task_data.task_status != "succeed" or task_data.task_result is None or not task_data.task_result.videos:
+        if task_data.task_status != KlingTaskStatus.succeed:
             return None
+        if task_data.task_result is None or not task_data.task_result.videos:
+            raise ValueError(f"Unexpected response: {task_data}")
 
         response = await self.client.get(str(task_data.task_result.videos[0].url))
         response.raise_for_status()
