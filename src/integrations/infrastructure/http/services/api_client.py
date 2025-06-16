@@ -44,7 +44,7 @@ class APIClientService(AuthMixin):
             "headers": {**self.headers, **headers},
             "json": json, "params": params, **kwargs
         }
-        logger.debug(f"Perfoming api request to {endpoint} with {request_params=}")
+        logger.debug(request_params["headers"])
         if method == "GET":
             response = await self.client.get(**request_params)
         elif method == "POST":
@@ -57,7 +57,7 @@ class APIClientService(AuthMixin):
             response = await self.client.patch(**request_params)
         else:
             raise ValueError("Method not supported")
-        if response.status != 200:
+        if not response.ok:
             logger.warning(f"Error occured on api request: {await response.text()}")
             response.raise_for_status()
         logger.debug(f"Get api response to {endpoint}: {response}")

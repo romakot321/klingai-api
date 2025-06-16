@@ -30,7 +30,7 @@ class KlingResponseCode(int, Enum):
 
 
 class KlingResponseDataTaskInfo(BaseModel):
-    external_task_id: str
+    external_task_id: str | None = None
 
 
 class KlingResponseDataTaskResult(BaseModel):

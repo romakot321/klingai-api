@@ -35,41 +35,6 @@ services:
     networks:
       default:
 
-  prometheus:
-    image: prom/prometheus:v3.2.1
-    container_name: klingapi_prometheus
-    depends_on:
-      - app
-    volumes:
-      - prometheus_data:/prometheus
-      - ./etc/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-    command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
-      - "--storage.tsdb.path=/prometheus"
-      - "--storage.tsdb.retention.time=7d"
-
-  postgres_exporter:
-    image: prometheuscommunity/postgres-exporter:latest
-    container_name: klingapi_postgres_prometheus_exporter
-    depends_on:
-      - db
-    env_file:
-      - .env
-    environment:
-      DATA_SOURCE_NAME: postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/postgres?sslmode=disable
-    restart: always
-
-  grafana:
-    image: grafana/grafana:11.6.0
-    container_name: klingapi_grafana
-    depends_on:
-      - prometheus
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./etc/grafana/provisioning:/usr/share/grafana/provisioning
-    env_file:
-      - .env
-
 networks:
   global_network:
     external: true

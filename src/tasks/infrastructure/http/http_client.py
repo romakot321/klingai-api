@@ -17,7 +17,6 @@ class TaskAiohttpClient(IAsyncHttpClient[aiohttp.ClientResponse]):
     @classmethod
     def get_aiohttp_client(cls) -> aiohttp.ClientSession:
         if cls.aiohttp_client is None:
-            cls.log.debug("Initialize AiohttpClient session.")
             timeout = aiohttp.ClientTimeout(total=2)
             connector = aiohttp.TCPConnector(
                 family=AF_INET,
@@ -33,7 +32,6 @@ class TaskAiohttpClient(IAsyncHttpClient[aiohttp.ClientResponse]):
     @classmethod
     async def close_aiohttp_client(cls) -> None:
         if cls.aiohttp_client:
-            cls.log.debug("Close AiohttpClient session.")
             await cls.aiohttp_client.close()
             cls.aiohttp_client = None
 

@@ -18,8 +18,7 @@ class AiohttpClient(IAsyncHttpClient[aiohttp.ClientResponse]):
     @classmethod
     def get_aiohttp_client(cls) -> aiohttp.ClientSession:
         if cls.aiohttp_client is None:
-            cls.log.debug("Initialize AiohttpClient session.")
-            timeout = aiohttp.ClientTimeout(total=5)
+            timeout = aiohttp.ClientTimeout(total=60)
             connector = aiohttp.TCPConnector(
                 family=AF_INET,
                 limit_per_host=SIZE_POOL_AIOHTTP,
@@ -34,7 +33,6 @@ class AiohttpClient(IAsyncHttpClient[aiohttp.ClientResponse]):
     @classmethod
     async def close_aiohttp_client(cls) -> None:
         if cls.aiohttp_client:
-            cls.log.debug("Close AiohttpClient session.")
             await cls.aiohttp_client.close()
             cls.aiohttp_client = None
 
