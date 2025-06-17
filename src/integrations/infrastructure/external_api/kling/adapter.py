@@ -1,4 +1,5 @@
 import base64
+import datetime as dt
 import sys
 import io
 from loguru import logger
@@ -85,10 +86,24 @@ class KlingAdapter(
             self._token_issue_at = datetime.datetime.now()
         return self._token
 
+    async def check_balance(self):
+        response: aiohttp.ClientResponse = await self.request(
+            method="GET",
+            endpoint="/account/costs",
+            headers={"Content-Type": "application/json"},
+            params={"start_time": int((dt.datetime.now() - dt.timedelta(days=7)).timestamp()), "end_time": int(dt.datetime.now().timestamp())}
+        )
+        data = await response.json()
+        total = sum([i.get("total_quantity") for i in data.get("data").get("resource_pack_subscribe_infos")])
+        remaining = sum([i.get("remaining_quantity") for i in data.get("data").get("resource_pack_subscribe_infos")])
+        if remaining / total <= 0.1:
+            logger.bind(name="balance").error(f"Account balance <10% ({remaining}/{total})")
+
     async def create_task_text2video(
         self, task_data: TaskCreateFromTextDTO
     ) -> TaskExternalDTO:
         request = self._txtdto_mapper.map_one(task_data)
+        await self.check_balance()
         response: aiohttp.ClientResponse = await self.request(
             method="POST",
             endpoint="/v1/videos/text2video",
@@ -108,6 +123,7 @@ class KlingAdapter(
         self, task_data: TaskCreateFromImageDTO, image: io.BytesIO, image_tail: io.BytesIO | None
     ) -> TaskExternalDTO:
         request = self._imgdto_mapper.map_one(task_data)
+        await self.check_balance()
         request.camera_control = None
         self.log.info(f"image2video request: {request}")
         request.image = self._encode_image(image)
