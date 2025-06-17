@@ -1,4 +1,4 @@
-# {{ cookiecutter.project_name }} API
+# KlingAI API
 
 ## Запуск
 
