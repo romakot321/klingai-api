@@ -25,7 +25,7 @@ async def run_task_image2video(
         task: TaskExternalDTO = await client.create_task_image2video(schema, image, image_tail)
     except aiohttp.ClientResponseError as e:
         if e.status == 429:  # Account exception, usually unsufficient balance
-            logger.bind(name="balance").error("Unsufficient https://app.klingai.com balance")
+            logger.bind(name="balance").error(f"Unsufficient https://app.klingai.com balance: " + e.message)
         if e.status != 400:  # Unexpected params, but task still generating
             raise e
         task = None
