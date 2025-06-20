@@ -1,9 +1,9 @@
 """All paths are the same as HailuoAPI for fotobudka compability"""
 
 import io
-from uuid import UUID
-from fastapi import APIRouter, Body, Depends, File, Request, UploadFile, HTTPException, BackgroundTasks
-from fastapi.responses import Response
+from pathlib import Path
+from fastapi import APIRouter, Body, Depends, File, UploadFile, HTTPException, BackgroundTasks
+from fastapi.responses import Response, FileResponse
 
 from src.core.config import settings
 from src.integrations.infrastructure.external_api.kling.adapter import KlingAdapter
@@ -12,7 +12,6 @@ from src.localstorage.infrastructure.repository import LocalStorageRepository
 from src.localstorage.presentation.dependencies import get_local_storage_repository
 from src.tasks.application.use_cases.task_store import store_task_result
 from src.tasks.domain.dtos import (
-    TaskCreateDTO,
     TaskCreateFromImageDTO,
     TaskCreateFromTextDTO,
     TaskReadDTO,
@@ -86,5 +85,6 @@ async def task_result_webhook(
 
 @tasks_router.get("/result/{task_id}", response_class=Response)
 async def get_task_result(task_id: int, storage: LocalStorageRepository = Depends(get_local_storage_repository)):
+    return FileResponse(path=Path(settings.LOCAL_STORAGE_PATH) / str(task_id), media_type="video/mp4", filename=f"{task_id}.mp4")
     buffer = uc_get_task_result(task_id, storage)
     return Response(content=buffer.getvalue(), media_type="video/mp4")
