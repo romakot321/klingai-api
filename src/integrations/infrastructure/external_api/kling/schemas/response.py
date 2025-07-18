@@ -39,7 +39,7 @@ class KlingResponseDataTaskResult(BaseModel):
         url: HttpUrl
         duration: str
 
-    videos: list[Video]
+    videos: list[Video] | None = None
 
 
 class KlingResponseDataSchema(BaseModel):
