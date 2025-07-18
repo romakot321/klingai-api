@@ -4,9 +4,8 @@ from loguru import logger
 from src.core.config import settings
 from fastapi import HTTPException
 from src.tasks.domain.entities import TaskStatus, TaskUpdate
-from src.tasks.domain.interfaces.http_client import IAsyncHttpClient
 from src.tasks.domain.interfaces.task_result_storage import ITaskStorageRepository
-from src.tasks.domain.interfaces.task_source_client import ITaskSourceClient, TTaskResult
+from src.tasks.domain.interfaces.task_source_client import ITaskSourceClient
 from src.tasks.domain.interfaces.task_uow import ITaskUnitOfWork
 from src.tasks.infrastructure.http.api_client import TaskWebhookClientService
 from src.localstorage.domain.exceptions import FileNotFoundError

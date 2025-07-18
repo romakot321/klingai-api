@@ -1,8 +1,4 @@
-from base64 import b64encode
 import aiohttp
-from enum import Enum
-from typing import Literal
-from urllib.parse import urljoin
 from loguru import logger
 
 from src.tasks.domain.entities import Task

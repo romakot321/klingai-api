@@ -2,7 +2,6 @@ import abc
 from typing import Generic, TypeVar
 
 from src.tasks.domain.dtos import TaskExternalDTO
-from src.tasks.domain.entities import Task
 
 TText2Video = TypeVar("TText2Video")
 TImage2Video = TypeVar("TImage2Video")
