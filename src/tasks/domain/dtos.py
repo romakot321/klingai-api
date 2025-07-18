@@ -106,7 +106,7 @@ class TaskCreateFromTextDTO(TaskCreateDTO):
 
 
 class TaskCreateFromImageDTO(TaskCreateDTO):
-    model_name: Literal["kling-v1", "kling-v1-6", "kling-v2-master"] = "kling-v1"
+    model_name: Literal["kling-v1", "kling-v1-6", "kling-v2-master", "kling-v2-1", "kling-v2-1-master"] = "kling-v1"
     image_tail: str | HttpUrl | None = None
     prompt: str | None = Field(default=None, max_length=2500)
     negative_prompt: str | None = Field(default=None, max_length=2500)
@@ -126,7 +126,7 @@ class TaskCreateFromImageDTO(TaskCreateDTO):
     @classmethod
     def as_form(
         cls,
-        model_name: Literal["kling-v1", "kling-v1-6", "kling-v2-master"] = Form(),
+        model_name: Literal["kling-v1", "kling-v1-6", "kling-v2-master", "kling-v2-1", "kling-v2-1-master"] = Form(),
         prompt: str | None = Form(default=None, max_length=2500),
         negative_prompt: str | None = Form(default=None, max_length=2500),
         cfg_scale: float = Form(gt=0, lt=1),

@@ -94,6 +94,7 @@ class KlingAdapter(
             params={"start_time": int((dt.datetime.now() - dt.timedelta(days=7)).timestamp()), "end_time": int(dt.datetime.now().timestamp())}
         )
         data = await response.json()
+        logger.info(f"Account balance: {data}")
         if not data.get("data", {}).get("resource_pack_subscribe_infos"):
             return
         total = sum([i.get("total_quantity") for i in data.get("data").get("resource_pack_subscribe_infos")])
