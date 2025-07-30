@@ -11,8 +11,15 @@ from src.tasks.presentation.api import tasks_router
 from src.tasks.presentation.panel import router as tasks_panel_router
 
 
+def setup_healthcheck_route(app: FastAPI):
+    @app.get("/")
+    def healthcheck():
+        return {"status": "ok"}
+
+
 app = FastAPI(title=settings.PROJECT_NAME)
 setup_fastapi_logging(app)
+setup_healthcheck_route(app)
 
 Instrumentator().instrument(app).expose(app, endpoint='/__internal_metrics__')
 
