@@ -1,7 +1,7 @@
 from loguru import logger
 import aiohttp
 
-from src.tasks.domain.dtos import TaskExternalDTO
+from src.tasks.domain.dtos import TaskExternalDTO, TaskCreateFromMultiImageDTO
 from src.tasks.domain.entities import TaskStatus, TaskUpdate
 from src.tasks.domain.interfaces.task_source_client import (
     ITaskSourceClient,
@@ -50,4 +50,26 @@ async def run_task_text2video(
     logger.info(f"Runned text2video task #{task_id}. External Response: {task}")
     async with uow:
         await uow.tasks.update(task_id, TaskUpdate(status=TaskStatus.submitted, external_id=task.external_id if task else None))
+        await uow.commit()
+
+async def run_task_multiimage2video(
+        task_id: int,
+        schema: TaskCreateFromMultiImageDTO,
+        images: list[TTaskResult],
+        client: ITaskSourceClient,
+        uow: ITaskUnitOfWork,
+) -> None:
+    try:
+        schema.external_task_id = str(task_id)
+        task: TaskExternalDTO = await client.create_task_multiimage2video(schema, images)
+    except aiohttp.ClientResponseError as e:
+        if e.status == 429:
+            logger.bind(name="balance").error(f"Insufficient https://app.klingai.com balance: " + str(e))
+        if e.status != 400:
+            raise e
+        task = None
+    logger.info(f"Runned multiimage2video task #{task_id}. External Response: {task}")
+    async with uow:
+        await uow.tasks.update(task_id,
+                               TaskUpdate(status=TaskStatus.submitted, external_id=task.external_id if task else None))
         await uow.commit()

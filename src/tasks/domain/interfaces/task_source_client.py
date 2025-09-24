@@ -9,14 +9,28 @@ TTaskResponse = TypeVar("TTaskResponse")
 TTaskResult = TypeVar("TTaskResult")
 
 
-class ITaskSourceClient(abc.ABC, Generic[TText2Video, TImage2Video, TTaskResponse, TTaskResult]):
+class ITaskSourceClient(
+    abc.ABC, Generic[TText2Video, TImage2Video, TTaskResponse, TTaskResult]
+):
     webhook_domain: str | None
 
     @abc.abstractmethod
-    async def create_task_text2video(self, task_data: TText2Video) -> TaskExternalDTO: ...
+    async def create_task_text2video(
+        self, task_data: TText2Video
+    ) -> TaskExternalDTO: ...
 
     @abc.abstractmethod
-    async def create_task_image2video(self, task_data: TImage2Video, image: TTaskResult, image_tail: TTaskResult | None) -> TaskExternalDTO: ...
+    async def create_task_image2video(
+        self,
+        task_data: TImage2Video,
+        image: TTaskResult,
+        image_tail: TTaskResult | None,
+    ) -> TaskExternalDTO: ...
+
+    @abc.abstractmethod
+    async def create_task_multiimage2video(
+        self, task_data: TImage2Video, images: list[TTaskResult]
+    ) -> TaskExternalDTO: ...
 
     @abc.abstractmethod
     async def process_task_callback(self, data: dict) -> TTaskResult | None: ...
