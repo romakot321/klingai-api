@@ -77,4 +77,21 @@ class KlingGenerateImageToVideoParams(BaseModel):
     duration: Literal["5", "10"] = "5"
     callback_url: str | None = None
     external_task_id: str | None = None
+    
+class KlingGenerateMultiImageToVideoParams(BaseModel):
+    model_name: Literal["kling-v1-6"] = "kling-v1-6"
+    image_list: list[dict[str, str]] = Field(..., description="Reference Image List, up to 4 images")
+    prompt: str | None = Field(default=None, max_length=2500)
+    negative_prompt: str | None = Field(default=None, max_length=2500)
+    cfg_scale: float = Field(
+        default=0.5,
+        gt=0,
+        lt=1,
+        description="Flexibility in video generation; The higher the value, the lower the model's degree of flexibility, and the stronger the relevance to the user's prompt.",
+    )
+    mode: Literal["std", "pro"] = "std"
+    duration: Literal["5", "10"] = "5"
+    aspect_ratio: Literal["16:9", "9:16", "1:1"] = "16:9"
+    callback_url: str | None = None
+    external_task_id: str | None = None
 

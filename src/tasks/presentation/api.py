@@ -14,7 +14,7 @@ from src.tasks.application.use_cases.task_store import store_task_result
 from src.tasks.domain.dtos import (
     TaskCreateFromImageDTO,
     TaskCreateFromTextDTO,
-    TaskReadDTO,
+    TaskReadDTO, TaskCreateFromMultiImageDTO, 
 )
 from src.tasks.domain.mappers import TaskEntityToDTOMapper
 from src.tasks.presentation.dependencies import TaskWebhookClientServiceDepend, TaskUoWDepend
@@ -28,6 +28,18 @@ from src.tasks.application.use_cases.task_run import (
 from src.tasks.application.use_cases.task_run import (
     run_task_text2video as uc_run_task_text2video,
 )
+from src.tasks.application.use_cases.task_create import create_task as uc_create_task
+from src.tasks.application.use_cases.task_run import (
+    run_task_image2video as uc_run_task_image2video,
+)
+from src.tasks.application.use_cases.task_run import (
+    run_task_multiimage2video as uc_run_task_multiimage2video,
+)
+from src.tasks.application.use_cases.task_run import (
+    run_task_text2video as uc_run_task_text2video,
+)
+from src.tasks.application.use_cases.task_status import get_task as uc_get_task
+from src.tasks.application.use_cases.task_store import get_task_result as uc_get_task_result
 
 tasks_router = APIRouter()
 
@@ -46,19 +58,20 @@ async def create_task_from_text(
 
 @tasks_router.post("/generate", response_model=TaskReadDTO)
 async def create_task_from_image(
-    uow: TaskUoWDepend,
-#    image_tail: UploadFile | None = None,
     background_tasks: BackgroundTasks,
-    task_source: KlingAdapter = Depends(get_kling_adapter),
-    file: UploadFile = File(),
-    task_data: TaskCreateFromImageDTO = Depends(TaskCreateFromImageDTO.as_form),
+    uow: TaskUoWDepend,               
+    image_tail: UploadFile | None = File(None),             
+    task_source: KlingAdapter = Depends(get_kling_adapter), 
+    file: UploadFile = File(),        
+    task_data: TaskCreateFromImageDTO = Depends(TaskCreateFromImageDTO.as_form), 
 ):
     task = await uc_create_task(task_data, uow)
     task_data.callback_url = "https://" + settings.DOMAIN + "/webhook/" + str(task.id)
     image = io.BytesIO(await file.read())
-    #if image_tail is not None:
-    #    image_tail = io.BytesIO(await image_tail.read())
-    background_tasks.add_task(uc_run_task_image2video, task.id, task_data, image, None, task_source, uow)
+    image_tail_data = None 
+    if image_tail is not None:
+        image_tail_data = io.BytesIO(await image_tail.read())
+    background_tasks.add_task(uc_run_task_image2video, task.id, task_data, image, image_tail_data, task_source, uow)
     return TaskEntityToDTOMapper().map_one(task)
 
 
@@ -83,6 +96,30 @@ async def task_result_webhook(
         pass
 
 
+@tasks_router.post("/generatemulti", response_model=TaskReadDTO)
+async def create_task_from_multi_image(
+        uow: TaskUoWDepend,
+        background_tasks: BackgroundTasks,
+        task_source: KlingAdapter = Depends(get_kling_adapter),
+        files: list[UploadFile] = File(..., description="Up to 4 images"),
+        task_data: TaskCreateFromMultiImageDTO = Depends(TaskCreateFromMultiImageDTO.as_form),
+):
+    if len(files) > 4:
+        raise HTTPException(status_code=400, detail="Maximum 4 images allowed")
+    if len(files) == 0:
+        raise HTTPException(status_code=400, detail="At least 1 image required")
+
+    task = await uc_create_task(task_data, uow)
+    task_data.callback_url = "https://" + settings.DOMAIN + "/webhook/" + str(task.id)
+
+    images = []
+    for file in files:
+        image_data = io.BytesIO(await file.read())
+        images.append(image_data)
+
+    background_tasks.add_task(uc_run_task_multiimage2video, task.id, task_data, images, task_source, uow)
+    return TaskEntityToDTOMapper().map_one(task)
+    
 @tasks_router.get("/result/{task_id}", response_class=Response)
 async def get_task_result(task_id: int, storage: LocalStorageRepository = Depends(get_local_storage_repository)):
     return FileResponse(path=Path(settings.LOCAL_STORAGE_PATH) / str(task_id), media_type="video/mp4", filename=f"{task_id}.mp4")

@@ -1,18 +1,15 @@
 import base64
+import datetime
 import datetime as dt
-import sys
 import io
-from loguru import logger
 import time
+
 import aiohttp
 import jwt
-import datetime
+from loguru import logger
 from pydantic import ValidationError
 
-from src.integrations.infrastructure.external_api.kling.schemas.request import (
-    KlingGenerateImageToVideoParams,
-    KlingGenerateTextToVideoParams,
-)
+from src.core.config import settings
 from src.integrations.infrastructure.external_api.kling.schemas.response import (
     KlingResponseDataSchema,
     KlingResponseSchema,
@@ -21,7 +18,7 @@ from src.integrations.infrastructure.external_api.kling.schemas.response import 
 from src.integrations.infrastructure.external_api.mappers.task import (
     TaskExternalToDomainMapper,
     TaskImageDTOToVideoRequestMapper,
-    TaskTextDTOToVideoRequestMapper,
+    TaskTextDTOToVideoRequestMapper, TaskMultiImageDTOToVideoRequestMapper,
 )
 from src.integrations.infrastructure.http.aiohttp_client import AiohttpClient
 from src.integrations.infrastructure.http.interfaces import IAsyncHttpClient
@@ -29,14 +26,11 @@ from src.integrations.infrastructure.http.services.api_client import APIClientSe
 from src.tasks.domain.dtos import (
     TaskCreateFromImageDTO,
     TaskCreateFromTextDTO,
-    TaskExternalDTO,
+    TaskExternalDTO, TaskCreateFromMultiImageDTO,
 )
-from src.tasks.domain.entities import Task
 from src.tasks.domain.interfaces.task_source_client import (
     ITaskSourceClient,
-    TTaskResult,
 )
-from src.core.config import settings
 
 
 class KlingAdapter(
@@ -50,15 +44,16 @@ class KlingAdapter(
     _token_issue_at: datetime.datetime | None = None
 
     def __init__(
-        self,
-        client: IAsyncHttpClient = AiohttpClient,
-        source_url: str = "https://api-singapore.klingai.com",
-        headers: dict | None = None,
+            self,
+            client: IAsyncHttpClient = AiohttpClient,
+            source_url: str = "https://api-singapore.klingai.com",
+            headers: dict | None = None,
     ):
         super().__init__(client, source_url, headers)
         self._token = None
         self._txtdto_mapper = TaskTextDTOToVideoRequestMapper()
         self._imgdto_mapper = TaskImageDTOToVideoRequestMapper()
+        self._multimgdto_mapper = TaskMultiImageDTOToVideoRequestMapper()
 
     @staticmethod
     def _generate_token(access_key: str, secret_key: str) -> str:
@@ -66,9 +61,9 @@ class KlingAdapter(
         payload = {
             "iss": access_key,
             "exp": int(time.time())
-            + 1800,  # The valid time, in this example, represents the current time+1800s(30min)
+                   + 1800,  # The valid time, in this example, represents the current time+1800s(30min)
             "nbf": int(time.time())
-            - 5,  # The time when it starts to take effect, in this example, represents the current time minus 5s
+                   - 5,  # The time when it starts to take effect, in this example, represents the current time minus 5s
         }
         token = jwt.encode(payload, secret_key, headers=headers)
         return token
@@ -76,9 +71,9 @@ class KlingAdapter(
     @property
     def token(self):
         if (
-            self._token is None
-            or self._token_issue_at is None
-            or (datetime.datetime.now() - self._token_issue_at).seconds > 1700
+                self._token is None
+                or self._token_issue_at is None
+                or (datetime.datetime.now() - self._token_issue_at).seconds > 1700
         ):
             self._token = self._generate_token(
                 settings.KLING_ACCESS_KEY, settings.KLING_SECRET_KEY
@@ -87,23 +82,38 @@ class KlingAdapter(
         return self._token
 
     async def check_balance(self):
+        return
         response: aiohttp.ClientResponse = await self.request(
             method="GET",
             endpoint="/account/costs",
             headers={"Content-Type": "application/json"},
-            params={"start_time": int((dt.datetime.now() - dt.timedelta(days=7)).timestamp()), "end_time": int(dt.datetime.now().timestamp())}
+            params={"start_time": int((dt.datetime.now() - dt.timedelta(days=7)).timestamp()),
+                    "end_time": int(dt.datetime.now().timestamp())}
         )
         data = await response.json()
-        logger.info(f"Account balance: {data}")
-        if not data.get("data", {}).get("resource_pack_subscribe_infos"):
+        
+        # Добавьте проверки
+        if data is None:
+            logger.bind(name="balance").error("API returned None response")
             return
-        total = sum([i.get("total_quantity") for i in data.get("data").get("resource_pack_subscribe_infos")])
-        remaining = sum([i.get("remaining_quantity") for i in data.get("data").get("resource_pack_subscribe_infos")])
-        if remaining / total <= 0.1:
+            
+        if data.get("data") is None:
+            logger.bind(name="balance").error(f"API response missing 'data' field: {data}")
+            return
+            
+        resource_infos = data.get("data").get("resource_pack_subscribe_infos")
+        if resource_infos is None:
+            logger.bind(name="balance").error(f"API response missing resource info: {data}")
+            return
+        
+        total = sum([i.get("total_quantity", 0) for i in resource_infos if i.get("total_quantity")])
+        remaining = sum([i.get("remaining_quantity", 0) for i in resource_infos if i.get("remaining_quantity")])
+        
+        if total > 0 and remaining / total <= 0.1:
             logger.bind(name="balance").error(f"Account balance <10% ({remaining}/{total})")
 
     async def create_task_text2video(
-        self, task_data: TaskCreateFromTextDTO
+            self, task_data: TaskCreateFromTextDTO
     ) -> TaskExternalDTO:
         request = self._txtdto_mapper.map_one(task_data)
         await self.check_balance()
@@ -123,7 +133,7 @@ class KlingAdapter(
         return base64.b64encode(image.getvalue()).decode()
 
     async def create_task_image2video(
-        self, task_data: TaskCreateFromImageDTO, image: io.BytesIO, image_tail: io.BytesIO | None
+            self, task_data: TaskCreateFromImageDTO, image: io.BytesIO, image_tail: io.BytesIO | None
     ) -> TaskExternalDTO:
         request = self._imgdto_mapper.map_one(task_data)
         await self.check_balance()
@@ -139,7 +149,6 @@ class KlingAdapter(
             json=request.model_dump(mode="json", exclude_none=True),
         )
         result = await response.json()
-        self.log.debug(f"Image2video kling response: {result}")
         result = KlingResponseSchema.model_validate(result)
         return TaskExternalToDomainMapper().map_one(result)
 
@@ -167,9 +176,33 @@ class KlingAdapter(
             method="GET",
             endpoint="/account/costs",
             headers={"Content-Type": "application/json"},
-            params={"start_time": (datetime.datetime.now() - datetime.timedelta(days=30)).timestamp(), "end_time": datetime.datetime.now().timestamp()}
+            params={"start_time": (datetime.datetime.now() - datetime.timedelta(days=30)).timestamp(),
+                    "end_time": datetime.datetime.now().timestamp()}
         )
         return response
+
+    async def create_task_multiimage2video(
+            self, task_data: TaskCreateFromMultiImageDTO, images: list[io.BytesIO]
+    ) -> TaskExternalDTO:
+        request = self._multimgdto_mapper.map_one(task_data)
+        await self.check_balance()
+
+        image_list = []
+        for image in images:
+            encoded_image = self._encode_image(image)
+            image_list.append({"image": encoded_image})
+
+        request.image_list = image_list
+
+        response = await self.request(
+            method="POST",
+            endpoint="/v1/videos/multi-image2video",
+            headers={"Content-Type": "application/json"},
+            json=request.model_dump(mode="json", exclude_none=True),
+        )
+        result = await response.json()
+        result = KlingResponseSchema.model_validate(result)
+        return TaskExternalToDomainMapper().map_one(result)
 
 
 async def print_kling_remaining_limits():

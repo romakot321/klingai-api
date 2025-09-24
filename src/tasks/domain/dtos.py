@@ -107,7 +107,6 @@ class TaskCreateFromTextDTO(TaskCreateDTO):
 
 class TaskCreateFromImageDTO(TaskCreateDTO):
     model_name: Literal["kling-v1", "kling-v1-6", "kling-v2-master", "kling-v2-1", "kling-v2-1-master"] = "kling-v1"
-    image_tail: str | HttpUrl | None = None
     prompt: str | None = Field(default=None, max_length=2500)
     negative_prompt: str | None = Field(default=None, max_length=2500)
     cfg_scale: float = Field(
@@ -138,7 +137,7 @@ class TaskCreateFromImageDTO(TaskCreateDTO):
             KlingCameraControlParams.as_form
         ),
         user_id: str = Form(),
-        app_id: str = Form(),
+        app_id: str = Form()
     ):
         return cls(
             model_name=model_name,
@@ -150,10 +149,54 @@ class TaskCreateFromImageDTO(TaskCreateDTO):
             webhook_url=webhook_url,
             camera_control=camera_control,
             app_id=app_id,
-            user_id=user_id,
+            user_id=user_id
         )
 
+class TaskCreateFromMultiImageDTO(TaskCreateDTO):
+    model_name: Literal["kling-v1-6"] = "kling-v1-6"
+    image_list: list[dict[str, str]] = Field(..., description="Reference Image List, up to 4 images")
+    prompt: str | None = Field(default=None, max_length=2500)
+    negative_prompt: str | None = Field(default=None, max_length=2500)
+    cfg_scale: float = Field(
+        default=0.5,
+        gt=0,
+        lt=1,
+        description="Flexibility in video generation; The higher the value, the lower the model's degree of flexibility, and the stronger the relevance to the user's prompt.",
+    )
+    mode: Literal["std", "pro"] = "std"
+    duration: Literal["5", "10"] = "5"
+    aspect_ratio: Literal["16:9", "9:16", "1:1"] = "16:9"
+    callback_url: str | None = None
+    external_task_id: str | None = None
 
+    @classmethod
+    def as_form(
+            cls,
+            model_name: Literal["kling-v1-6"] = Form(),
+            prompt: str | None = Form(default=None, max_length=2500),
+            negative_prompt: str | None = Form(default=None, max_length=2500),
+            cfg_scale: float = Form(gt=0, lt=1),
+            mode: str = Form(default="std"),
+            duration: str = Form(default="5"),
+            aspect_ratio: str = Form(default="16:9"),
+            webhook_url: str | None = Form(default=None),
+            user_id: str = Form(),
+            app_id: str = Form(),
+    ):
+        return cls(
+            model_name=model_name,
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            cfg_scale=cfg_scale,
+            mode=mode,
+            duration=duration,
+            aspect_ratio=aspect_ratio,
+            webhook_url=webhook_url,
+            app_id=app_id,
+            user_id=user_id,
+            image_list=[],
+        )
+        
 class TaskReadDTO(BaseModel):
     class Data(BaseModel):
         id: int
