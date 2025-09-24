@@ -16,8 +16,9 @@ from src.tasks.domain.dtos import (
     TaskCreateFromTextDTO,
     TaskReadDTO,
 )
+from src.tasks.domain.interfaces.task_source_client import ITaskSourceClient
 from src.tasks.domain.mappers import TaskEntityToDTOMapper
-from src.tasks.presentation.dependencies import TaskWebhookClientServiceDepend, TaskUoWDepend
+from src.tasks.presentation.dependencies import TaskWebhookClientServiceDepend, TaskUoWDepend, get_task_source_client
 
 from src.tasks.application.use_cases.task_create import create_task as uc_create_task
 from src.tasks.application.use_cases.task_status import get_task as uc_get_task
@@ -36,7 +37,7 @@ tasks_router = APIRouter()
 async def create_task_from_text(
     task_data: TaskCreateFromTextDTO,
     uow: TaskUoWDepend,
-    task_source: KlingAdapter = Depends(get_kling_adapter),
+    task_source: ITaskSourceClient = Depends(get_task_source_client),
 ):
     task = await uc_create_task(task_data, uow)
     task_data.callback_url = "https://" + settings.DOMAIN + "/webhook/" + str(task.id)
@@ -49,15 +50,13 @@ async def create_task_from_image(
     uow: TaskUoWDepend,
 #    image_tail: UploadFile | None = None,
     background_tasks: BackgroundTasks,
-    task_source: KlingAdapter = Depends(get_kling_adapter),
+    task_source: ITaskSourceClient = Depends(get_task_source_client),
     file: UploadFile = File(),
     task_data: TaskCreateFromImageDTO = Depends(TaskCreateFromImageDTO.as_form),
 ):
     task = await uc_create_task(task_data, uow)
     task_data.callback_url = "https://" + settings.DOMAIN + "/webhook/" + str(task.id)
     image = io.BytesIO(await file.read())
-    #if image_tail is not None:
-    #    image_tail = io.BytesIO(await image_tail.read())
     background_tasks.add_task(uc_run_task_image2video, task.id, task_data, image, None, task_source, uow)
     return TaskEntityToDTOMapper().map_one(task)
 
@@ -75,7 +74,7 @@ async def task_result_webhook(
     task_api_client: TaskWebhookClientServiceDepend,
     body: dict = Body(),
     storage: LocalStorageRepository = Depends(get_local_storage_repository),
-    task_source: KlingAdapter = Depends(get_kling_adapter),
+    task_source: ITaskSourceClient = Depends(get_task_source_client),
 ):
     try:
         await store_task_result(task_id, body, uow, task_source, task_api_client, storage)

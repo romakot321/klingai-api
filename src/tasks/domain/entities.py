@@ -4,6 +4,7 @@ from pydantic import BaseModel, HttpUrl
 
 class TaskSource(str, Enum):
     kling = 'kling'
+    fal = 'fal'
 
 
 class TaskStatus(str, Enum):

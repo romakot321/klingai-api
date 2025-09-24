@@ -16,7 +16,7 @@ from src.integrations.infrastructure.external_api.kling.schemas.request import (
 from src.integrations.infrastructure.external_api.kling.schemas.response import (
     KlingResponseDataSchema,
     KlingResponseSchema,
-    KlingTaskStatus
+    KlingTaskStatus,
 )
 from src.integrations.infrastructure.external_api.mappers.task import (
     TaskExternalToDomainMapper,
@@ -91,16 +91,33 @@ class KlingAdapter(
             method="GET",
             endpoint="/account/costs",
             headers={"Content-Type": "application/json"},
-            params={"start_time": int((dt.datetime.now() - dt.timedelta(days=7)).timestamp()), "end_time": int(dt.datetime.now().timestamp())}
+            params={
+                "start_time": int(
+                    (dt.datetime.now() - dt.timedelta(days=7)).timestamp()
+                ),
+                "end_time": int(dt.datetime.now().timestamp()),
+            },
         )
         data = await response.json()
         logger.info(f"Account balance: {data}")
         if not data.get("data", {}).get("resource_pack_subscribe_infos"):
             return
-        total = sum([i.get("total_quantity") for i in data.get("data").get("resource_pack_subscribe_infos")])
-        remaining = sum([i.get("remaining_quantity") for i in data.get("data").get("resource_pack_subscribe_infos")])
+        total = sum(
+            [
+                i.get("total_quantity")
+                for i in data.get("data").get("resource_pack_subscribe_infos")
+            ]
+        )
+        remaining = sum(
+            [
+                i.get("remaining_quantity")
+                for i in data.get("data").get("resource_pack_subscribe_infos")
+            ]
+        )
         if remaining / total <= 0.1:
-            logger.bind(name="balance").error(f"Account balance <10% ({remaining}/{total})")
+            logger.bind(name="balance").error(
+                f"Account balance <10% ({remaining}/{total})"
+            )
 
     async def create_task_text2video(
         self, task_data: TaskCreateFromTextDTO
@@ -123,15 +140,21 @@ class KlingAdapter(
         return base64.b64encode(image.getvalue()).decode()
 
     async def create_task_image2video(
-        self, task_data: TaskCreateFromImageDTO, image: io.BytesIO, image_tail: io.BytesIO | None
+        self,
+        task_data: TaskCreateFromImageDTO,
+        image: io.BytesIO,
+        image_tail: io.BytesIO | None,
     ) -> TaskExternalDTO:
-        request = self._imgdto_mapper.map_one(task_data)
         await self.check_balance()
+
+        request = self._imgdto_mapper.map_one(
+            task_data,
+            self._encode_image(image),
+            self._encode_image(image_tail) if image_tail else None,
+        )
         request.camera_control = None
         self.log.info(f"image2video request: {request}")
-        request.image = self._encode_image(image)
-        if image_tail:
-            request.image_tail = self._encode_image(image_tail)
+
         response = await self.request(
             method="POST",
             endpoint="/v1/videos/image2video",
@@ -140,6 +163,7 @@ class KlingAdapter(
         )
         result = await response.json()
         self.log.debug(f"Image2video kling response: {result}")
+
         result = KlingResponseSchema.model_validate(result)
         return TaskExternalToDomainMapper().map_one(result)
 
@@ -167,7 +191,12 @@ class KlingAdapter(
             method="GET",
             endpoint="/account/costs",
             headers={"Content-Type": "application/json"},
-            params={"start_time": (datetime.datetime.now() - datetime.timedelta(days=30)).timestamp(), "end_time": datetime.datetime.now().timestamp()}
+            params={
+                "start_time": (
+                    datetime.datetime.now() - datetime.timedelta(days=30)
+                ).timestamp(),
+                "end_time": datetime.datetime.now().timestamp(),
+            },
         )
         return response
 
@@ -179,4 +208,5 @@ async def print_kling_remaining_limits():
 
 if __name__ == "__main__":
     import asyncio
+
     asyncio.run(print_kling_remaining_limits())

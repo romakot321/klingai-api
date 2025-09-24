@@ -5,8 +5,9 @@ import os
 
 
 class Settings(BaseSettings):
-    KLING_ACCESS_KEY: str = os.environ.get("KLING_ACCESS_KEY")
-    KLING_SECRET_KEY: str = os.environ.get("KLING_SECRET_KEY")
+    KLING_ACCESS_KEY: str
+    KLING_SECRET_KEY: str
+    FAL_KEY: str
     LOCAL_STORAGE_PATH: str = "storage"
 
     PROJECT_NAME: str = os.environ.get("PROJECT_NAME", "UNNAMED PROJECT")

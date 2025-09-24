@@ -27,7 +27,7 @@ def setup_fastapi_logging(app: FastAPI):
     fastapi_logger = logger.bind(name="fastapi")
     fastapi_logger.configure(extra={"app_name": settings.PROJECT_NAME})
     fastapi_logger.add(
-        "/app/logs/fastapi.json",
+        "logs/fastapi.json",
         format="{time:MMMM D, YYYY > HH:mm:ss!UTC} | {level} | {message}",
         serialize=True,
         rotation="30 MB",
@@ -52,7 +52,7 @@ def setup_fastapi_logging(app: FastAPI):
 
 logger.configure(extra={"app_name": settings.PROJECT_NAME})
 logger.add(
-    "/app/logs/app.json",
+    "logs/app.json",
     format="{time:MMMM D, YYYY > HH:mm:ss!UTC} | {level} | {message}",
     serialize=True,
     rotation="30 MB",

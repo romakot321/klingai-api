@@ -26,8 +26,8 @@ async def run_task_image2video(
     except aiohttp.ClientResponseError as e:
         if e.status == 429:  # Account exception, usually unsufficient balance
             logger.bind(name="balance").error("Unsufficient https://app.klingai.com balance: " + str(e))
-        if e.status != 400:  # Unexpected params, but task still generating
-            raise e
+        # if e.status != 400:  # Unexpected params, but task still generating
+        raise e
         task = None
     logger.info(f"Runned image2video task #{task_id}. External Response: {task}")
     async with uow:
@@ -44,8 +44,8 @@ async def run_task_text2video(
     except aiohttp.ClientResponseError as e:
         if e.status == 429:  # Account exception, usually unsufficient balance
             logger.bind(name="balance").error("Unsufficient https://app.klingai.com balance")
-        if e.status != 400:  # Unexpected params, but task still generating
-            raise e
+        # if e.status != 400:  # Unexpected params, but task still generating
+        raise e
         task = None
     logger.info(f"Runned text2video task #{task_id}. External Response: {task}")
     async with uow:
