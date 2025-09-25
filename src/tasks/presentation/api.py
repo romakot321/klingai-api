@@ -1,6 +1,7 @@
 """All paths are the same as HailuoAPI for fotobudka compability"""
 
 import io
+from loguru import logger
 from pathlib import Path
 from fastapi import (
     APIRouter,
@@ -116,12 +117,13 @@ async def task_result_webhook(
     storage: LocalStorageRepository = Depends(get_local_storage_repository),
     task_source: ITaskSourceClient = Depends(get_task_source_client),
 ):
+    logger.debug(body)
     try:
         await store_task_result(
             task_id, body, uow, task_source, task_api_client, storage
         )
-    except HTTPException:
-        pass
+    except HTTPException as e:
+        logger.warning(e)
 
 
 @tasks_router.post("/generatemulti", response_model=TaskReadDTO)

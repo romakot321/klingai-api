@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request, Response
 from loguru import logger
 import loguru
 from starlette.background import BackgroundTask
+from starlette.responses import StreamingResponse
 from src.core.config import settings
 
 
@@ -45,7 +46,7 @@ def setup_fastapi_logging(app: FastAPI):
 
     @app.middleware("http")
     async def log_request(request: Request, call_next):
-        response: Response = await call_next(request)
+        response: StreamingResponse = await call_next(request)
         log(request, response)
         return response
 

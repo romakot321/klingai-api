@@ -21,8 +21,6 @@ app = FastAPI(title=settings.PROJECT_NAME)
 setup_fastapi_logging(app)
 setup_healthcheck_route(app)
 
-Instrumentator().instrument(app).expose(app, endpoint='/__internal_metrics__')
-
 app.include_router(tasks_router, tags=["Task"])
 app.include_router(tasks_panel_router, include_in_schema=False, prefix="/panel")
 

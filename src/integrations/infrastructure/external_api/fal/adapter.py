@@ -32,6 +32,7 @@ from src.integrations.infrastructure.http.interfaces import IAsyncHttpClient
 from src.integrations.infrastructure.http.services.api_client import APIClientService
 from src.tasks.domain.dtos import (
     TaskCreateFromImageDTO,
+    TaskCreateFromMultiImageDTO,
     TaskCreateFromTextDTO,
     TaskExternalDTO,
 )
@@ -62,10 +63,29 @@ class FalKlingAdapter(
     ):
         super().__init__(client, source_url, headers)
         self._dto_mapper = TaskDTOToFalKlingRequestMapper()
+        self._cdn_token: str | None = None
+        self._cdn_token_issued_at = datetime.datetime.now()
 
     @property
     def auth_headers(self):
         return {"Authorization": f"Key {self.token}"}
+
+    async def make_cdn_token(self) -> str:
+        if (
+            datetime.datetime.now() - self._cdn_token_issued_at
+        ).seconds > 24 * 60 * 60 or self._cdn_token is None:
+            response = await self.request(
+                "POST",
+                "https://rest.alpha.fal.ai/storage/auth/token?storage_type=fal-cdn-v3",
+                headers={
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                },
+                data=b"{}"
+            )
+            response_data = await response.json()
+            return f"{response_data.get('token_type')} {response_data.get('token')}"
+        return self._cdn_token
 
     async def create_task_text2video(
         self, task_data: TaskCreateFromTextDTO
@@ -91,11 +111,12 @@ class FalKlingAdapter(
         return base64.b64encode(image.getvalue()).decode()
 
     async def upload_image(self, image: io.BytesIO) -> str:
+        token = await self.make_cdn_token()
         response = await self.request(
             "POST",
             self.CDN_URL + "/files/upload",
             data=image.read(),
-            headers={"Content-Type": "image/jpeg"},
+            headers={"Content-Type": "image/jpeg", "Authorization": token},
         )
         return (await response.json())["access_url"]
 
@@ -115,7 +136,7 @@ class FalKlingAdapter(
             headers={"Content-Type": "application/json"},
             json=request.model_dump(mode="json", exclude_none=True),
             params={
-                "fal_webhook": f"https://{self.webhook_domain}/api/task/webhook/{task_data.external_task_id}"
+                "fal_webhook": f"https://{self.webhook_domain}/webhook/{task_data.external_task_id}"
             },
         )
         result = await response.json()
@@ -141,3 +162,8 @@ class FalKlingAdapter(
         if result.status != "OK" or result.payload is None:
             return None
         return await self.download_result(result.payload.video.url)
+
+    async def create_task_multiimage2video(
+        self, task_data: TaskCreateFromMultiImageDTO, images: list[io.BytesIO]
+    ) -> TaskExternalDTO:
+        raise NotImplementedError()
