@@ -88,7 +88,9 @@ class KlingCameraControlParams(BaseModel):
 
 
 class TaskCreateFromTextDTO(TaskCreateDTO):
-    model_name: Literal["kling-v1", "kling-v1-6", "kling-v2-master"] = "kling-v1"
+    model_name: Literal["kling-v1-6", "kling-v2-master", "kling-v1-6-pro"] = (
+        "kling-v1-6"
+    )
     prompt: str
     negative_prompt: str | None = None
     cfg_scale: float = Field(
@@ -106,7 +108,13 @@ class TaskCreateFromTextDTO(TaskCreateDTO):
 
 
 class TaskCreateFromImageDTO(TaskCreateDTO):
-    model_name: Literal["kling-v1", "kling-v1-6", "kling-v2-master", "kling-v2-1", "kling-v2-1-master"] = "kling-v1"
+    model_name: Literal[
+        "kling-v1-6",
+        "kling-v2-master",
+        "kling-v2-1",
+        "kling-v2-1-master",
+        "kling-v1-6-pro",
+    ] = "kling-v1-6"
     prompt: str | None = Field(default=None, max_length=2500)
     negative_prompt: str | None = Field(default=None, max_length=2500)
     cfg_scale: float = Field(
@@ -125,7 +133,13 @@ class TaskCreateFromImageDTO(TaskCreateDTO):
     @classmethod
     def as_form(
         cls,
-        model_name: Literal["kling-v1", "kling-v1-6", "kling-v2-master", "kling-v2-1", "kling-v2-1-master"] = Form(),
+        model_name: Literal[
+            "kling-v1-6-pro",
+            "kling-v1-6",
+            "kling-v2-master",
+            "kling-v2-1",
+            "kling-v2-1-master",
+        ] = Form(),
         prompt: str | None = Form(default=None, max_length=2500),
         negative_prompt: str | None = Form(default=None, max_length=2500),
         cfg_scale: float = Form(gt=0, lt=1),
@@ -137,7 +151,7 @@ class TaskCreateFromImageDTO(TaskCreateDTO):
             KlingCameraControlParams.as_form
         ),
         user_id: str = Form(),
-        app_id: str = Form()
+        app_id: str = Form(),
     ):
         return cls(
             model_name=model_name,
@@ -149,13 +163,16 @@ class TaskCreateFromImageDTO(TaskCreateDTO):
             webhook_url=webhook_url,
             camera_control=camera_control,
             app_id=app_id,
-            user_id=user_id
+            user_id=user_id,
         )
 
+
 class TaskCreateFromMultiImageDTO(TaskCreateDTO):
-    model_name: Literal["kling-v1-6"] = "kling-v1-6"
-    image_list: list[dict[str, str]] = Field(..., description="Reference Image List, up to 4 images")
-    prompt: str | None = Field(default=None, max_length=2500)
+    model_name: Literal["kling-v1-6", "kling-v1-6-pro"] = "kling-v1-6"
+    image_list: list[dict[str, str]] = Field(
+        ..., description="Reference Image List, up to 4 images"
+    )
+    prompt: str = Field(max_length=2500)
     negative_prompt: str | None = Field(default=None, max_length=2500)
     cfg_scale: float = Field(
         default=0.5,
@@ -171,17 +188,17 @@ class TaskCreateFromMultiImageDTO(TaskCreateDTO):
 
     @classmethod
     def as_form(
-            cls,
-            model_name: Literal["kling-v1-6"] = Form(),
-            prompt: str | None = Form(default=None, max_length=2500),
-            negative_prompt: str | None = Form(default=None, max_length=2500),
-            cfg_scale: float = Form(gt=0, lt=1),
-            mode: str = Form(default="std"),
-            duration: str = Form(default="5"),
-            aspect_ratio: str = Form(default="16:9"),
-            webhook_url: str | None = Form(default=None),
-            user_id: str = Form(),
-            app_id: str = Form(),
+        cls,
+        model_name: Literal["kling-v1-6", "kling-v1-6-pro"] = Form(),
+        prompt: str = Form(max_length=2500),
+        negative_prompt: str | None = Form(default=None, max_length=2500),
+        cfg_scale: float = Form(gt=0, lt=1),
+        mode: str = Form(default="std"),
+        duration: str = Form(default="5"),
+        aspect_ratio: str = Form(default="16:9"),
+        webhook_url: str | None = Form(default=None),
+        user_id: str = Form(),
+        app_id: str = Form(),
     ):
         return cls(
             model_name=model_name,
@@ -196,7 +213,8 @@ class TaskCreateFromMultiImageDTO(TaskCreateDTO):
             user_id=user_id,
             image_list=[],
         )
-        
+
+
 class TaskReadDTO(BaseModel):
     class Data(BaseModel):
         id: int

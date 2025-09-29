@@ -2,6 +2,7 @@ import base64
 import datetime as dt
 import sys
 import io
+from typing import Literal
 from loguru import logger
 import time
 import aiohttp
@@ -42,6 +43,28 @@ from src.tasks.domain.interfaces.task_source_client import (
     TTaskResult,
 )
 from src.core.config import settings
+
+
+_domain_model_name_to_endpoint: dict[Literal["image", "text", "elements"], dict] = {
+    "image": {
+        "kling-v2-1": "/fal-ai/kling-video/v2.1/standard/image-to-video",
+        "kling-v1-6-pro": "/fal-ai/kling-video/v1.6/pro/image-to-video",
+        "kling-v1-6": "/fal-ai/kling-video/v1.6/standard/image-to-video",
+        "kling-v2-1-master": "/fal-ai/kling-video/v2.1/master/image-to-video",
+        "kling-v2-master": "/fal-ai/kling-video/v2/master/image-to-video",
+    },
+    "text": {
+        "kling-v2-1": "/fal-ai/kling-video/v2.1/standard/text-to-video",
+        "kling-v1-6-pro": "/fal-ai/kling-video/v1.6/pro/text-to-video",
+        "kling-v1-6": "/fal-ai/kling-video/v1.6/standard/text-to-video",
+        "kling-v2-1-master": "/fal-ai/kling-video/v2.1/master/text-to-video",
+        "kling-v2-master": "/fal-ai/kling-video/v2/master/text-to-video",
+    },
+    "elements": {
+        "kling-v1-6": "/fal-ai/kling-video/v1.6/standard/elements",
+        "kling-v1-6-pro": "/fal-ai/kling-video/v1.6/pro/elements"
+    }
+}
 
 
 class FalKlingAdapter(
@@ -92,9 +115,14 @@ class FalKlingAdapter(
     ) -> TaskExternalDTO:
         request = self._dto_mapper.map_text2video(task_data)
         self.log.info(f"Text2video fal request: {request}")
+
+        endpoint = _domain_model_name_to_endpoint["text"].get(task_data.model_name)
+        if endpoint is None:
+            raise ValueError(f"Unknown model name: {task_data.model_name}")
+
         response: aiohttp.ClientResponse = await self.request(
             method="POST",
-            endpoint="/fal-ai/kling-video/v2.1/master/text-to-video",
+            endpoint=endpoint,
             headers={"Content-Type": "application/json"},
             json=request.model_dump(mode="json", exclude_none=True),
             params={
@@ -127,12 +155,19 @@ class FalKlingAdapter(
         image_tail: io.BytesIO | None,
     ) -> TaskExternalDTO:
         image_url = await self.upload_image(image)
-        request = self._dto_mapper.map_image2video(task_data, image_url)
+        image_tail_url = None
+        if image_tail and task_data.model_name == 'kling-v1-6':
+            image_tail_url = await self.upload_image(image_tail)
+        request = self._dto_mapper.map_image2video(task_data, image_url, image_tail_url)
         self.log.info(f"image2video fal request: {request}")
+
+        endpoint = _domain_model_name_to_endpoint["image"].get(task_data.model_name)
+        if endpoint is None:
+            raise ValueError(f"Unknown model name: {task_data.model_name}")
 
         response = await self.request(
             method="POST",
-            endpoint="/fal-ai/kling-video/v2.1/standard/image-to-video",
+            endpoint=endpoint,
             headers={"Content-Type": "application/json"},
             json=request.model_dump(mode="json", exclude_none=True),
             params={
@@ -166,4 +201,23 @@ class FalKlingAdapter(
     async def create_task_multiimage2video(
         self, task_data: TaskCreateFromMultiImageDTO, images: list[io.BytesIO]
     ) -> TaskExternalDTO:
-        raise NotImplementedError()
+        endpoint = _domain_model_name_to_endpoint["elements"].get(task_data.model_name)
+        if endpoint is None:
+            raise ValueError(f"Unknown model name: {task_data.model_name}")
+
+        images_urls = [await self.upload_image(image) for image in images]
+        request = self._dto_mapper.map_elements(task_data, images_urls)
+
+        response = await self.request(
+            method="POST",
+            endpoint=endpoint,
+            headers={"Content-Type": "application/json"},
+            json=request.model_dump(mode="json", exclude_none=True),
+            params={
+                "fal_webhook": f"https://{self.webhook_domain}/webhook/{task_data.external_task_id}"
+            },
+        )
+        result = await response.json()
+
+        result = FalGenerateResponse.model_validate(result)
+        return TaskExternalToDomainMapper().map_one(result)

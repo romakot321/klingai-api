@@ -22,16 +22,26 @@ async def run_task_image2video(
 ) -> None:
     try:
         schema.external_task_id = str(task_id)
-        task: TaskExternalDTO = await client.create_task_image2video(schema, image, image_tail)
+        task: TaskExternalDTO = await client.create_task_image2video(
+            schema, image, image_tail
+        )
     except aiohttp.ClientResponseError as e:
         if e.status == 429:  # Account exception, usually unsufficient balance
-            logger.bind(name="balance").error("Unsufficient https://app.klingai.com balance: " + str(e))
+            logger.bind(name="balance").error(
+                "Unsufficient https://app.klingai.com balance: " + str(e)
+            )
         # if e.status != 400:  # Unexpected params, but task still generating
         raise e
         task = None
     logger.info(f"Runned image2video task #{task_id}. External Response: {task}")
     async with uow:
-        await uow.tasks.update(task_id, TaskUpdate(status=TaskStatus.submitted, external_id=task.external_id if task else None))
+        await uow.tasks.update(
+            task_id,
+            TaskUpdate(
+                status=TaskStatus.submitted,
+                external_id=task.external_id if task else None,
+            ),
+        )
         await uow.commit()
 
 
@@ -43,33 +53,52 @@ async def run_task_text2video(
         task: TaskExternalDTO = await client.create_task_text2video(schema)
     except aiohttp.ClientResponseError as e:
         if e.status == 429:  # Account exception, usually unsufficient balance
-            logger.bind(name="balance").error("Unsufficient https://app.klingai.com balance")
+            logger.bind(name="balance").error(
+                "Unsufficient https://app.klingai.com balance"
+            )
         # if e.status != 400:  # Unexpected params, but task still generating
         raise e
         task = None
     logger.info(f"Runned text2video task #{task_id}. External Response: {task}")
     async with uow:
-        await uow.tasks.update(task_id, TaskUpdate(status=TaskStatus.submitted, external_id=task.external_id if task else None))
+        await uow.tasks.update(
+            task_id,
+            TaskUpdate(
+                status=TaskStatus.submitted,
+                external_id=task.external_id if task else None,
+            ),
+        )
         await uow.commit()
 
+
 async def run_task_multiimage2video(
-        task_id: int,
-        schema: TaskCreateFromMultiImageDTO,
-        images: list[TTaskResult],
-        client: ITaskSourceClient,
-        uow: ITaskUnitOfWork,
+    task_id: int,
+    schema: TaskCreateFromMultiImageDTO,
+    images: list[TTaskResult],
+    client: ITaskSourceClient,
+    uow: ITaskUnitOfWork,
 ) -> None:
     try:
         schema.external_task_id = str(task_id)
-        task: TaskExternalDTO = await client.create_task_multiimage2video(schema, images)
+        task: TaskExternalDTO = await client.create_task_multiimage2video(
+            schema, images
+        )
     except aiohttp.ClientResponseError as e:
         if e.status == 429:
-            logger.bind(name="balance").error(f"Insufficient https://app.klingai.com balance: " + str(e))
-        if e.status != 400:
-            raise e
+            logger.bind(name="balance").error(
+                f"Insufficient https://app.klingai.com balance: " + str(e)
+            )
+        # if e.status != 400:
+        raise e
         task = None
     logger.info(f"Runned multiimage2video task #{task_id}. External Response: {task}")
     async with uow:
-        await uow.tasks.update(task_id,
-                               TaskUpdate(status=TaskStatus.submitted, external_id=task.external_id if task else None))
+        await uow.tasks.update(
+            task_id,
+            TaskUpdate(
+                status=TaskStatus.submitted,
+                external_id=task.external_id if task else None,
+            ),
+        )
         await uow.commit()
+

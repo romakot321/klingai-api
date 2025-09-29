@@ -60,8 +60,12 @@ class KlingGenerateTextToVideoParams(BaseModel):
 
 
 class KlingGenerateImageToVideoParams(BaseModel):
-    model_name: Literal["kling-v1", "kling-v1-6", "kling-v2-master", "kling-v2-1", "kling-v2-1-master"] = "kling-v1"
-    image: str | HttpUrl | None = Field(default=None, description="Can be passed as base64 string, without prefix")
+    model_name: Literal[
+        "kling-v1", "kling-v1-6", "kling-v2-master", "kling-v2-1", "kling-v2-1-master"
+    ] = "kling-v1"
+    image: str | HttpUrl | None = Field(
+        default=None, description="Can be passed as base64 string, without prefix"
+    )
     image_tail: str | HttpUrl | None = None
     prompt: str | None = Field(default=None, max_length=2500)
     negative_prompt: str | None = Field(default=None, max_length=2500)
@@ -77,10 +81,13 @@ class KlingGenerateImageToVideoParams(BaseModel):
     duration: Literal["5", "10"] = "5"
     callback_url: str | None = None
     external_task_id: str | None = None
-    
+
+
 class KlingGenerateMultiImageToVideoParams(BaseModel):
     model_name: Literal["kling-v1-6"] = "kling-v1-6"
-    image_list: list[dict[str, str]] = Field(..., description="Reference Image List, up to 4 images")
+    image_list: list[dict[str, str]] = Field(
+        ..., description="Reference Image List, up to 4 images"
+    )
     prompt: str | None = Field(default=None, max_length=2500)
     negative_prompt: str | None = Field(default=None, max_length=2500)
     cfg_scale: float = Field(
@@ -94,4 +101,3 @@ class KlingGenerateMultiImageToVideoParams(BaseModel):
     aspect_ratio: Literal["16:9", "9:16", "1:1"] = "16:9"
     callback_url: str | None = None
     external_task_id: str | None = None
-
